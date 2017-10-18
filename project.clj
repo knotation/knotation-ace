@@ -1,4 +1,4 @@
-(defproject knotation-ace "0.1.0-SNAPSHOT"
+(defproject knotation-ace "0.0.1-SNAPSHOT"
   :description "A front-end library implementing a Knotation editor using Ace"
   :url "http://github.com/knotation/knotation-ace"
   :license {:name "BSD 3-Clause License"
@@ -7,6 +7,7 @@
   :hooks [leiningen.cljsbuild]
   :dependencies [[org.clojure/clojure "1.8.0"]
 
+                 [cljsjs/codemirror "5.24.0-1"]
                  [crate "0.2.4"]]
 
   :cljsbuild {:builds [{:source-paths ["src/knotation_ace"]
