@@ -1,5 +1,5 @@
-(ns knotation-ace.core
-  (:require [cljsjs.codemirror :as editor]))
+(ns knotation-editor.editor
+  (:require [cljsjs.codemirror]))
 
 (defn log! [& things]
   (apply js/console.log (map clj->js things)))
@@ -8,13 +8,13 @@
   (.addEventListener js/document "DOMContentLoaded" fn))
 
 (defn editor! [editor-id & {:keys [theme mode focus?]
-                            :or {mode "ace/mode/sqlserver"
-                                 theme "ace/theme/github"
+                            :or {mode "sqlserver"
+                                 theme "github"
                                  focus? true}}]
-  (log! "Testing testing! CM: " editor/CodeMirror)
+  (log! "Testing testing! CM: " js/CodeMirror)
   ;; (let [editor (.edit js/ace editor-id)]
   ;;   (.setTheme editor theme)
-  ;;   (-> editor (.getSession) (.setMode "ace/mode/sqlserver"))
+  ;;   (-> editor (.getSession) (.setMode mode))
   ;;   (when focus? (.focus editor))
   ;;   editor)
   )
