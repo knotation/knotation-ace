@@ -1,4 +1,4 @@
-(defproject knotation-editor "0.0.2-SNAPSHOT"
+(defproject knotation-editor "0.0.6-SNAPSHOT"
   :description "A front-end library implementing a Knotation editor"
   :url "http://github.com/knotation/knotation-editor"
   :license {:name "BSD 3-Clause License"
@@ -6,13 +6,12 @@
   :plugins [[lein-cljsbuild "1.1.6"]]
   :hooks [leiningen.cljsbuild]
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 ;; [org.clojure/clojurescript "0.0-3149"]
 
                  [cljsjs/codemirror "5.24.0-1"]
 
                  [crate "0.2.4"]]
 
-  :cljsbuild {:builds [{:source-paths ["src/knotation_editor"]
+  :cljsbuild {:builds [{:source-paths ["src/knotation_editor" "src/modes"]
                         :compiler {:output-to "resources/knotation_editor.js"
                                    :optimizations :whitespace
                                    :pretty-print true}

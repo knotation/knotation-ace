@@ -1,5 +1,6 @@
 (ns knotation-editor.editor
-  (:require [cljsjs.codemirror]))
+  (:require [cljsjs.codemirror]
+            [modes.sparql]))
 
 (defn log! [& things]
   (apply js/console.log (map clj->js things)))
