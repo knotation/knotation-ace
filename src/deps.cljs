@@ -1,4 +1,4 @@
 {:foreign-libs
- [{:file "ace/ace.js"
-   :file-min "ace/ace.min.js"}]
- :externs ["ace/externs.js"]}
+ [{:file "modes/sparql.js"
+   :file-min "modes/sparql.min.js"
+   :provides [modes.sparql]}]}
