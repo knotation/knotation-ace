@@ -347,8 +347,12 @@ div.CodeMirror-dragcursors {
 /* Help users use markselection to safely style text background */
 span.CodeMirror-selectedtext { background: none; }")
 
-(defn append-style!
+(def applied? (atom false))
+
+(defn apply-style!
   []
-  (let [style (.createElement js/document "style")]
-    (set! (.-innerHTML style) cm-style)
-    (-> js/document .-body (.appendChild style))))
+  (when (not @applied?)
+    (let [style (.createElement js/document "style")]
+      (set! (.-innerHTML style) cm-style)
+      (-> js/document .-body (.appendChild style)))
+    (reset! applied? true)))
