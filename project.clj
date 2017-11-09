@@ -1,4 +1,4 @@
-(defproject knotation-editor "0.0.10"
+(defproject knotation-editor "0.0.11-SNAPSHOT"
   :description "A front-end library implementing a Knotation editor"
   :url "http://github.com/knotation/knotation-editor"
   :license {:name "BSD 3-Clause License"
@@ -11,7 +11,7 @@
 
                  [crate "0.2.4"]]
 
-  :cljsbuild {:builds [{:source-paths ["src/knotation_editor" "src/modes"]
+  :cljsbuild {:builds [{:source-paths ["src/modes" "src/knotation_editor"]
                         :compiler {:output-to "resources/knotation_editor.js"
                                    :optimizations :whitespace
                                    :pretty-print true}

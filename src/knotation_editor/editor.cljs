@@ -1,6 +1,9 @@
 (ns knotation-editor.editor
   (:require [cljsjs.codemirror]
+
             [modes.sparql]
+            [modes.turtle]
+            [modes.ntriples]
 
             [knotation-editor.styles :as styles]))
 

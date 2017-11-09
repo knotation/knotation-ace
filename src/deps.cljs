@@ -1,4 +1,10 @@
 {:foreign-libs
  [{:file "modes/sparql.js"
    :file-min "modes/sparql.min.js"
-   :provides [modes.sparql]}]}
+   :provides [modes.sparql]}
+  {:file "modes/turtle.js"
+   :file-min "modes/turtle.min.js"
+   :provides [modes.turtle]}
+  {:file "modes/ntriples.js"
+   :file-min "modes/ntriples.min.js"
+   :provides [modes.ntriples]}]}
