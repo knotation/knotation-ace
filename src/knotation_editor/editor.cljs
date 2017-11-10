@@ -20,10 +20,11 @@
   [editor-selector & {:keys [mode theme focus?]
                       :or {mode "sparql" theme "default" focus? true}}]
   (styles/apply-style!)
-  (let [editor (js/CodeMirror
-                (.querySelector js/document editor-selector)
-                (clj->js {:lineNumbers true :mode mode :autofocus focus?}))]
-    editor))
+  (let [elem (.querySelector js/document editor-selector)
+        opts (clj->js {:lineNumbers true :mode mode :autofocus focus?})]
+    (if (= "TEXTAREA" (.-nodeName elem))
+      (.fromTextArea js/CodeMirror elem opts)
+      (js/CodeMirror elem opts))))
 (defn fromSelector
   [editor-selector options]
   (let [opts (merge {:mode "sparql" :theme "default"
