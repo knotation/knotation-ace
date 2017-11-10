@@ -16,4 +16,4 @@
  (clj->js {:start [{:regex #"@prefix" :token "keyword"}
                    {:regex #"<.*?>" :token "iri"}
                    {:regex #": .*" :token "subject" :sol true}
-                   {:regex #"^.*?:" :token "predicate" :sol true}]}))
+                   {:regex #"^.*?: " :token "predicate" :sol true}]}))
