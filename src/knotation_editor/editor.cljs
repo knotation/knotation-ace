@@ -4,6 +4,7 @@
             [modes.sparql]
             [modes.turtle]
             [modes.ntriples]
+            [modes.knotation]
 
             [knotation-editor.styles :as styles]))
 
@@ -23,4 +24,9 @@
                 (.querySelector js/document editor-selector)
                 (clj->js {:lineNumbers true :mode mode :autofocus focus?}))]
     editor))
-(def fromSelector editor!)
+(defn fromSelector
+  [editor-selector options]
+  (let [opts (merge {:mode "sparql" :theme "default"
+                     :focus? (not (not (:focus options)))}
+                    (dissoc (js->clj options :keywordize-keys true) :focus))]
+    (apply editor! editor-selector (mapcat identity opts))))
