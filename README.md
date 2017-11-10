@@ -66,3 +66,10 @@ Takes a CSS selector, and optionally `mode`, `theme` and `focus?` optional argum
 ### `add-commands!`/`addCommands`
 
 Takes an editor and a map of commands (`add-commands!` accepts a Clojure map while `addCommands` accepts a JavaScript object). It adds the new commands under the specified bindings.
+
+
+## License
+
+Copyright © 2017 Knocean Inc.
+
+Distributed under the BSD 3-Clause License.
