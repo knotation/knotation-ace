@@ -1,6 +1,6 @@
 (ns knotation-editor.styles)
 
-(def cm-style "/* BASICS */
+(def cm-default "/* BASICS */
 
 .CodeMirror {
   /* Set height, width, borders, and global font properties here */
@@ -348,11 +348,17 @@ div.CodeMirror-dragcursors {
 span.CodeMirror-selectedtext { background: none; }")
 
 (def applied? (atom false))
+(def cm-styles (atom [cm-default]))
+
+(defn add-style!
+  [style]
+  (swap! cm-styles conj style))
 
 (defn apply-style!
   []
   (when (not @applied?)
-    (let [style (.createElement js/document "style")]
-      (set! (.-innerHTML style) cm-style)
-      (-> js/document .-body (.appendChild style)))
+    (doseq [s @cm-styles]
+      (let [style (.createElement js/document "style")]
+        (set! (.-innerHTML style) s)
+        (-> js/document .-body (.appendChild style))))
     (reset! applied? true)))

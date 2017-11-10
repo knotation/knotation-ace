@@ -21,7 +21,7 @@
                       :or {mode "sparql" theme "default" focus? true}}]
   (styles/apply-style!)
   (let [elem (.querySelector js/document editor-selector)
-        opts (clj->js {:lineNumbers true :mode mode :autofocus focus?})]
+        opts (clj->js {:lineNumbers true :mode mode :autofocus focus? :theme (str theme " " mode)})]
     (if (= "TEXTAREA" (.-nodeName elem))
       (.fromTextArea js/CodeMirror elem opts)
       (js/CodeMirror elem opts))))
