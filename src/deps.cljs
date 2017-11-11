@@ -2,9 +2,6 @@
  [{:file "modes/ntriples.js"
    :file-min "modes/ntriples.min.js"
    :provides [modes.ntriples]}
-  {:file "modes/simple.js"
-   :file-min "modes/simple.min.js"
-   :provides [modes.simple]}
   {:file "modes/sparql.js"
    :file-min "modes/sparql.min.js"
    :provides [modes.sparql]}
