@@ -10,7 +10,9 @@
 
                  [cljsjs/codemirror "5.24.0-1"]
 
-                 [crate "0.2.4"]]
+                 [crate "0.2.4"]
+
+                 [org.knotation/knotation-cljc "0.1.0-SNAPSHOT"]]
 
   :cljsbuild {:builds [{:source-paths ["src/modes" "src/knotation_editor"]
                         :compiler {:output-to "resources/knotation_editor.js"
