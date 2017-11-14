@@ -52,6 +52,9 @@
                          (.match stream #".*?:"))
                        "predicate")
 
+                     (.match stream #".*?: " false)
+                     (do (.match stream #".*?:") "name")
+
                      (match? #".*?:.*") "prefixed-name"
 
                      :else (do (.skipToEnd stream) "term"))))]
