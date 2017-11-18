@@ -6,7 +6,12 @@
             [modes.ntriples]
             [modes.knotation]
 
-            [knotation-editor.styles :as styles]))
+            [knotation-editor.styles :as styles]
+
+            [org.knotation.api :as api]
+            [org.knotation.state :as st]
+
+            [clojure.string :as string]))
 
 (defn addCommands
   [ed commands]
@@ -43,3 +48,35 @@
                      :focus? (not (not (.-focus options)))}
                     (dissoc (js->clj options :keywordize-keys true) :focus))]
     (apply editor! editor-selector (mapcat identity opts))))
+
+
+;;;;;;;;;; Externally useful functions
+(defn mode-of
+  [ed]
+  (.-name (.getMode ed)))
+(def modeOf mode-of)
+
+(defn knotation-mode?
+  [ed]
+  (= "knotation" (mode-of ed)))
+(def knotationModeP knotation-mode?)
+
+(defn line-range
+  [ed]
+  (range 0 (- (.lineCount ed) 1)))
+
+(defn clear-line-highlights!
+  [& eds]
+  (doseq [e eds]
+    (doseq [i (line-range e)]
+      (.removeLineClass e i "background"))))
+(def clearLineHighlights clear-line-highlights!)
+
+(defn highlight-line!
+  ([ed line] (highlight-line! ed line "highlight"))
+  ([ed line class] (.addLineClass ed line "background" class)))
+(def highlightLine highlight-line!)
+
+(defn scroll-into-view!
+  [ed & {:keys [line ch] :or {ch 0}}]
+  (.scrollIntoView ed (clj->js {:line line :ch ch})))
