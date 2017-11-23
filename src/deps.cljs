@@ -1,5 +1,8 @@
 {:foreign-libs
- [{:file "modes/ntriples.js"
+ [{:file "org.knotation/n3.js"
+   :file-min "org.knotation/n3.min.js"
+   :provides [org.knotation.n3]}
+  {:file "modes/ntriples.js"
    :file-min "modes/ntriples.min.js"
    :provides [modes.ntriples]}
   {:file "modes/sparql.js"

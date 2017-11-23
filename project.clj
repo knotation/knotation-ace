@@ -17,5 +17,6 @@
   :cljsbuild {:builds [{:source-paths ["src/modes" "src/knotation_editor"]
                         :compiler {:output-to "resources/knotation_editor.js"
                                    :optimizations :whitespace
-                                   :pretty-print true}
+                                   :pretty-print true
+                                   :language-in :es5}
                         :jar true}]})
