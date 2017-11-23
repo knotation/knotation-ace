@@ -8,10 +8,45 @@
 
             [knotation-editor.styles :as styles]
 
+            [org.knotation.n3 :as n3]
             [org.knotation.api :as api]
             [org.knotation.state :as st]
 
             [clojure.string :as string]))
+
+(defn _parseTTL
+  [string]
+  ;; (let [parser (.Parser js/N3)
+  ;;       res (atom [])]
+  ;;   (.parse parser string
+  ;;           (fn [err trip prefs]
+  ;;             (.log js/console "TRIP" err trip prefs)
+  ;;             (swap! res conj [err trip prefs])))
+  ;;   (clj->js @res))
+  (let [lines (string/split-lines string)
+        prefixes (->> lines
+                      (filter #(re-find #"^@prefix" %))
+                      (map #(re-find #"^@prefix (.*): <?([^>]+)>?" %))
+                      (map (fn [[_ k v]] [k v]))
+                      (into {}))]
+    {:prefixes prefixes :quads (js->clj (.parse (.Parser js/N3) string))}))
+
+(defn _writeTTL
+  ([trips callback] (_writeTTL (clj->js {}) trips callback))
+  ([prefixes trips callback]
+   (.log js/console "_writeTTL CALLED" prefixes trips callback)
+   (let [writer (.Writer js/N3 (clj->js {:prefixes (js->clj prefixes)}))]
+     (doseq [t trips] (.addTriple writer t))
+     (.end writer callback))))
+
+(defn _compiledFromTTL
+  [string]
+  (let [parsed (_parseTTL string)]
+    (.log js/console "PARSED" (clj->js parsed))
+    (_writeTTL (clj->js (:prefixes parsed)) (clj->js (:quads parsed))
+               (fn [err res]
+                 (.log js/console "CALLBACK CALLED err:" err " res:" (clj->js (api/input :nq res)))
+                 (.log js/console "END RESULT" (clj->js (api/run-operations [(api/input :nq res)])))))))
 
 (defn addCommands
   [ed commands]
