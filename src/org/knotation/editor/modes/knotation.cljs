@@ -1,8 +1,8 @@
-(ns modes.knotation
+(ns org.knotation.editor.modes.knotation
   (:require [clojure.string :as string]
             [cljsjs.codemirror]
 
-            [knotation-editor.styles :as style]
+            [org.knotation.editor.styles :as style]
             [org.knotation.api :as knot]))
 
 (style/add-style!

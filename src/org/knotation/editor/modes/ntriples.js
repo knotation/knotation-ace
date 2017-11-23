@@ -29,7 +29,7 @@
          }
 */
 
-goog.provide("modes.ntriples");
+goog.provide("org.knotation.editor.modes.ntriples");
 
 (function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS

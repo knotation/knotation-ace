@@ -1,1 +1,0 @@
-(ns knotation-editor.core)

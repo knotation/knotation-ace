@@ -1,4 +1,4 @@
-(ns knotation-editor.styles)
+(ns org.knotation.editor.styles)
 
 (def cm-default "/* BASICS */
 

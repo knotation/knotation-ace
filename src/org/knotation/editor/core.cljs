@@ -1,12 +1,12 @@
-(ns knotation-editor.editor
+(ns org.knotation.editor.core
   (:require [cljsjs.codemirror]
 
-            [modes.sparql]
-            [modes.turtle]
-            [modes.ntriples]
-            [modes.knotation]
+            [org.knotation.editor.modes.sparql]
+            [org.knotation.editor.modes.turtle]
+            [org.knotation.editor.modes.ntriples]
+            [org.knotation.editor.modes.knotation]
 
-            [knotation-editor.styles :as styles]
+            [org.knotation.editor.styles :as styles]
 
             [org.knotation.n3 :as n3]
             [org.knotation.api :as api]

@@ -1,7 +1,7 @@
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
-goog.provide("modes.sparql");
+goog.provide("org.knotation.editor.modes.turtle");
 
 (function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS
@@ -13,40 +13,21 @@ goog.provide("modes.sparql");
 })(function(CodeMirror) {
 "use strict";
 
-CodeMirror.defineMode("sparql", function(config) {
+CodeMirror.defineMode("turtle", function(config) {
   var indentUnit = config.indentUnit;
   var curPunc;
 
   function wordRegexp(words) {
     return new RegExp("^(?:" + words.join("|") + ")$", "i");
   }
-  var ops = wordRegexp(["str", "lang", "langmatches", "datatype", "bound", "sameterm", "isiri", "isuri",
-                        "iri", "uri", "bnode", "count", "sum", "min", "max", "avg", "sample",
-                        "group_concat", "rand", "abs", "ceil", "floor", "round", "concat", "substr", "strlen",
-                        "replace", "ucase", "lcase", "encode_for_uri", "contains", "strstarts", "strends",
-                        "strbefore", "strafter", "year", "month", "day", "hours", "minutes", "seconds",
-                        "timezone", "tz", "now", "uuid", "struuid", "md5", "sha1", "sha256", "sha384",
-                        "sha512", "coalesce", "if", "strlang", "strdt", "isnumeric", "regex", "exists",
-                        "isblank", "isliteral", "a", "bind"]);
-  var keywords = wordRegexp(["base", "prefix", "select", "distinct", "reduced", "construct", "describe",
-                             "ask", "from", "named", "where", "order", "limit", "offset", "filter", "optional",
-                             "graph", "by", "asc", "desc", "as", "having", "undef", "values", "group",
-                             "minus", "in", "not", "service", "silent", "using", "insert", "delete", "union",
-                             "true", "false", "with",
-                             "data", "copy", "to", "move", "add", "create", "drop", "clear", "load"]);
-  var operatorChars = /[*+\-<>=&|\^\/!\?]/;
+  var ops = wordRegexp([]);
+  var keywords = wordRegexp(["@prefix", "@base", "a"]);
+  var operatorChars = /[*+\-<>=&|]/;
 
   function tokenBase(stream, state) {
     var ch = stream.next();
     curPunc = null;
-    if (ch == "$" || ch == "?") {
-      if(ch == "?" && stream.match(/\s/, false)){
-        return "operator";
-      }
-      stream.match(/^[\w\d]*/);
-      return "variable-2";
-    }
-    else if (ch == "<" && !stream.match(/^[\s\u00a0=]/, false)) {
+    if (ch == "<" && !stream.match(/^[\s\u00a0=]/, false)) {
       stream.match(/^[^\s\u00a0>]*>?/);
       return "atom";
     }
@@ -56,7 +37,7 @@ CodeMirror.defineMode("sparql", function(config) {
     }
     else if (/[{}\(\),\.;\[\]]/.test(ch)) {
       curPunc = ch;
-      return "bracket";
+      return null;
     }
     else if (ch == "#") {
       stream.skipToEnd();
@@ -64,27 +45,32 @@ CodeMirror.defineMode("sparql", function(config) {
     }
     else if (operatorChars.test(ch)) {
       stream.eatWhile(operatorChars);
-      return "operator";
+      return null;
     }
     else if (ch == ":") {
-      stream.eatWhile(/[\w\d\._\-]/);
-      return "atom";
-    }
-    else if (ch == "@") {
-      stream.eatWhile(/[a-z\d\-]/i);
-      return "meta";
-    }
-    else {
+          return "operator";
+        } else {
       stream.eatWhile(/[_\w\d]/);
-      if (stream.eat(":")) {
-        stream.eatWhile(/[\w\d_\-]/);
-        return "atom";
+      if(stream.peek() == ":") {
+        return "variable-3";
+      } else {
+             var word = stream.current();
+
+             if(keywords.test(word)) {
+                        return "meta";
+             }
+
+             if(ch >= "A" && ch <= "Z") {
+                    return "comment";
+                 } else {
+                        return "keyword";
+                 }
       }
       var word = stream.current();
       if (ops.test(word))
-        return "builtin";
+        return null;
       else if (keywords.test(word))
-        return "keyword";
+        return "meta";
       else
         return "variable";
     }
@@ -137,11 +123,7 @@ CodeMirror.defineMode("sparql", function(config) {
       else if (curPunc == "{") pushContext(state, "}", stream.column());
       else if (/[\]\}\)]/.test(curPunc)) {
         while (state.context && state.context.type == "pattern") popContext(state);
-        if (state.context && curPunc == state.context.type) {
-          popContext(state);
-          if (curPunc == "}" && state.context && state.context.type == "pattern")
-            popContext(state);
-        }
+        if (state.context && curPunc == state.context.type) popContext(state);
       }
       else if (curPunc == "." && state.context && state.context.type == "pattern") popContext(state);
       else if (/atom|string|variable/.test(style) && state.context) {
@@ -177,6 +159,6 @@ CodeMirror.defineMode("sparql", function(config) {
   };
 });
 
-CodeMirror.defineMIME("application/sparql-query", "sparql");
+CodeMirror.defineMIME("text/turtle", "turtle");
 
 });

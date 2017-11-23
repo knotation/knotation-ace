@@ -8,15 +8,15 @@ _A front-end Knotation editor currently built on CodeMirror_
 
 ### From ClojureScript
 
-1. Add `[knotation-editor "0.0.10"]` to your `project.clj`
-2. Add `[knotation.editor :as ed]` to your `require` statement
+1. Add `[org.knotation/knotation-editor "0.0.15"]` to your `project.clj`
+2. Add `[org.knotation.editor.core :as ed]` to your `require` statement
 3. Call `ed/editor!` with the selector of your desired editor element
 
 Example:
 
 ```Clojure
 (ns example.editor
-  (:require [knotation-editor.editor :as ed]))
+  (:require [org.knotation.editor.core :as ed]))
 
 (onLoad
  (fn []
@@ -30,7 +30,7 @@ Example:
 
 1. Serve the current `resources/knotation_editor.js` file from somewhere
 2. Add the appropriate `script` tag to your HTML
-3. Call `knotation_editor.editor.fromSelector` with the selector of your desired editor element
+3. Call `org.knotation.editor.core.fromSelector` with the selector of your desired editor element
 
 Example:
 
@@ -40,8 +40,8 @@ Example:
     <script src="../../resources/knotation_editor.js" type="text/javascript"></script>
     <script type="text/javascript">
       function setUp() {
-        var ed = knotation_editor.editor.fromSelector('#editor');
-        knotation_editor.editor.addCommands(ed, {"Ctrl-Enter": function (ed) { console.log("Hello there!") }});
+        var ed = org.knotation.editor.core.fromSelector('#editor');
+        org.knotation.editor.core.addCommands(ed, {"Ctrl-Enter": function (ed) { console.log("Hello there!") }});
       }
     </script>
   </head>
