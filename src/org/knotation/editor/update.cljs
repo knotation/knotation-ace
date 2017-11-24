@@ -21,14 +21,15 @@
   [line-map-atom source target]
   (let [processed (api/run-operations [(api/input :kn (.getValue source)) (api/output :ttl)])
         result (string/join "\n" (filter identity (map (fn [e] (->> e ::st/output ::st/lines first)) processed)))
-        line-pairs (->> processed
-                        (map (fn [e]
-                               [(->> e ::st/input ::st/line-number)
-                                (->> e ::st/output ::st/line-number)]))
-                        (filter (fn [[a b]] (and a b)))
-                        (map (fn [[a b]] [(- a 1) (- b 1)])))]
+        line-map (->> processed
+                      (map (fn [e]
+                             [(->> e ::st/input ::st/line-number)
+                              (->> e ::st/output ::st/line-number)]))
+                      (filter (fn [[a b]] (and a b)))
+                      (map (fn [[a b]] [(- a 1) (- b 1)]))
+                      (into {}))]
     (.setValue target result)
-    (reset! line-map-atom (into {} line-pairs))))
+    (reset! line-map-atom line-map)))
 
 (defn cross->update!
   [line-map-atom editor-a editor-b]
@@ -37,6 +38,6 @@
         (fn [cs]
           (let [ln (util/current-line editor-a)]
             (compile-content-to line-map-atom editor-a editor-b)
-            (high/highlight-line! editor-b ln)
+            (high/cross->highlight! @line-map-atom editor-a editor-b)
             (util/scroll-into-view! editor-b :line ln)))
         500)))

@@ -32,17 +32,16 @@
 
 (defn cross->highlight!
   [line-map editor-a editor-b]
-  (fn [_]
-    (clear-line-highlights! editor-a editor-b)
-    (let [ln-from (util/current-line editor-a)]
-      (when-let [ln-to (get line-map ln-from)]
-        (highlight-line! editor-a ln-from)
-        (highlight-line! editor-b ln-to)
-        (util/scroll-into-view! editor-b :line ln-to)))))
+  (clear-line-highlights! editor-a editor-b)
+  (let [ln-from (util/current-line editor-a)]
+    (when-let [ln-to (get line-map ln-from)]
+      (highlight-line! editor-a ln-from)
+      (highlight-line! editor-b ln-to)
+      (util/scroll-into-view! editor-b :line ln-to))))
 
 (defn cross<->highlight!
   [line-map editor-a editor-b]
   (.on editor-a "cursorActivity"
-       (cross->highlight! @line-map editor-a editor-b))
+       (fn [_] (cross->highlight! @line-map editor-a editor-b)))
   (.on editor-b "cursorActivity"
-       (cross->highlight! (set/map-invert @line-map) editor-b editor-a)))
+       (fn [_] (cross->highlight! (set/map-invert @line-map) editor-b editor-a))))
