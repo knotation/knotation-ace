@@ -25,7 +25,7 @@
 
 (defn line-range
   [ed]
-  (range 0 (- (.lineCount ed) 1)))
+  (range 0 (.lineCount ed)))
 
 (defn scroll-into-view!
   [ed & {:keys [line ch] :or {ch 0}}]

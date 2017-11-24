@@ -7,8 +7,9 @@
             [org.knotation.editor.modes.knotation]
 
             [org.knotation.editor.styles :as styles]
-            [org.knotation.editor.util]
-            [org.knotation.editor.highlight]
+            [org.knotation.editor.util :as util]
+            [org.knotation.editor.highlight :as high]
+            [org.knotation.editor.update :as update]
 
             [org.knotation.n3 :as n3]
             [org.knotation.api :as api]
@@ -85,3 +86,13 @@
                      :focus? (not (not (.-focus options)))}
                     (dissoc (js->clj options :keywordize-keys true) :focus))]
     (apply editor! editor-selector (mapcat identity opts))))
+
+(defn linked
+  [editor-a editor-b]
+  (let [line-map (atom {})]
+
+    (update/compile-content-to line-map editor-a editor-b)
+    (update/cross->update! line-map editor-a editor-b)
+
+    (high/cross<->highlight! line-map editor-a editor-b)
+    (high/subject-highlight-on-move! editor-a)))

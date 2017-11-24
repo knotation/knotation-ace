@@ -21,7 +21,12 @@
   [line-map-atom source target]
   (let [processed (api/run-operations [(api/input :kn (.getValue source)) (api/output :ttl)])
         result (string/join "\n" (filter identity (map (fn [e] (->> e ::st/output ::st/lines first)) processed)))
-        line-pairs (map (fn [e] [(->> e ::st/input ::st/line-number) (->> e ::st/output ::st/line-number)]) processed)]
+        line-pairs (->> processed
+                        (map (fn [e]
+                               [(->> e ::st/input ::st/line-number)
+                                (->> e ::st/output ::st/line-number)]))
+                        (filter (fn [[a b]] (and a b)))
+                        (map (fn [[a b]] [(- a 1) (- b 1)])))]
     (.setValue target result)
     (reset! line-map-atom (into {} line-pairs))))
 
