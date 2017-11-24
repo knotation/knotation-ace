@@ -2,6 +2,8 @@
   (:import [goog.async Debouncer])
   (:require [cljsjs.codemirror]))
 
+(defn dom-loaded [f] (.addEventListener js/document "DOMContentLoaded" f))
+
 (defn debounce [f interval]
   (let [dbnc (Debouncer. f interval)]
     ;; We use apply here to support functions of various arities

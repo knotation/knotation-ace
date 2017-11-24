@@ -26,6 +26,10 @@
           (when (and (= subject (subject-of i)) (not (blank? i)))
             (highlight-line! editor i "current-subject")))))))
 
+(defn subject-highlight-on-move!
+  [ed]
+  (.on ed "cursorActivity" (fn [ed] (highlight-by-subject! ed (util/current-line ed)))))
+
 (defn cross->highlight!
   [line-map editor-a editor-b]
   (fn [_]
