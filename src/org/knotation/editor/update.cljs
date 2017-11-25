@@ -45,11 +45,11 @@
 
 (defn cross->update!
   [line-map-atom editors]
-  (.on (first editors) "changes"
-       (util/debounce
-        (fn [cs]
-          (let [ln (util/current-line (first editors))]
-            (compile-content-to line-map-atom editors)
-            (high/cross->highlight! @line-map-atom 0 editors)
-            (util/scroll-into-view! (second editors) :line ln)))
-        500)))
+  (doseq [[ix e] (map-indexed vector (butlast editors))]
+    (.on e "changes"
+         (util/debounce
+          (fn [cs]
+            (let [ln (util/current-line e)]
+              (compile-content-to line-map-atom editors)
+              (high/cross->highlight! @line-map-atom ix editors)))
+          500))))
