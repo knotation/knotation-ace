@@ -5,6 +5,7 @@
             [org.knotation.state :as st]
 
             [org.knotation.editor.util :as util]
+            [org.knotation.editor.line-map :as ln]
             [org.knotation.editor.highlight :as high]))
 
      ;; (let [opts {::api/operation-type :render ::st/format :ttl}
@@ -17,19 +18,49 @@
      ;;   (doseq [p line-pairs]
      ;;     (.log js/console "  " (clj->js p))))
 
+(defn compile-contents-to
+  [line-map-atom & editors]
+  (let [ct (count editors)
+        processed (api/run-operations
+                   (conj
+                    (vec (map #(api/input :kn (.getValue source))))
+                    (api/output :ttl)))
+        result (->> processed
+                    (map #(->> % ::st/output ::st/lines first))
+                    (filter identity)
+                    (string/join "\n"))
+        line-map (ln/compiled->line-map processed)]
+    (.setValue (last editors) result)
+    (reset! line-map-atom line-map)))
+
+(defn compiled->content
+  [compiled]
+  (string/join "\n" (filter identity (map (fn [e] (->> e ::st/output ::st/lines first)) processed))))
+
 (defn compile-content-to
   [line-map-atom source target]
   (let [processed (api/run-operations [(api/input :kn (.getValue source)) (api/output :ttl)])
-        result (string/join "\n" (filter identity (map (fn [e] (->> e ::st/output ::st/lines first)) processed)))
-        line-map (->> processed
-                      (map (fn [e]
-                             [(->> e ::st/input ::st/line-number)
-                              (->> e ::st/output ::st/line-number)]))
-                      (filter (fn [[a b]] (and a b)))
-                      (map (fn [[a b]] [(- a 1) (- b 1)]))
-                      (into {}))]
+        result (compiled->content processed)
+        line-map (ln/compiled->line-map processed)]
     (.setValue target result)
     (reset! line-map-atom line-map)))
+
+(defn compiles
+  [a b c]
+  (.log js/console
+        "END CONTENT:"
+        (clj->js (->> (api/run-operations
+                       [(api/input :kn (.getValue a))
+                        (api/input :kn (.getValue b))
+                        (api/output :ttl)])
+                      (mapcat #(->> % ::st/output ::st/lines))
+                      (string/join "\n"))))
+  (clj->js
+   (ln/compiledToLineMap
+    (api/run-operations
+     [(api/input :kn (.getValue a))
+      (api/input :kn (.getValue b))
+      (api/output :ttl)]))))
 
 (defn cross->update!
   [line-map-atom editor-a editor-b]

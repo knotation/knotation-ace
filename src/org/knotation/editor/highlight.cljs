@@ -40,8 +40,8 @@
       (util/scroll-into-view! editor-b :line ln-to))))
 
 (defn cross<->highlight!
-  [line-map editor-a editor-b]
+  [line-map-atom editor-a editor-b]
   (.on editor-a "cursorActivity"
-       (fn [_] (cross->highlight! @line-map editor-a editor-b)))
+       (fn [_] (cross->highlight! @line-map-atom editor-a editor-b)))
   (.on editor-b "cursorActivity"
-       (fn [_] (cross->highlight! (set/map-invert @line-map) editor-b editor-a))))
+       (fn [_] (cross->highlight! (set/map-invert @line-map-atom) editor-b editor-a))))
