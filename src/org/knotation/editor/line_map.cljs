@@ -5,7 +5,7 @@
 
             [org.knotation.editor.util :as util]))
 
-(defn compiledToLineMap
+(defn compiled->line-map
   [compiled]
   (:map
    (reduce
@@ -16,21 +16,13 @@
             m (:map memo)]
         {:ed ed
          :map (if (and in out)
-                (conj m [ed in :out out])
+                (assoc-in
+                 (assoc-in m [ed (dec in)] [:out (dec out)])
+                 [:out out] [ed (dec in)])
                 m)}))
-    {:ed 0 :map []}
+    {:ed 0 :map {}}
     compiled)))
 
-(defn compiled->line-map
-  [compiled]
-  (->> compiled
-       (map (fn [e]
-              [(->> e ::st/input ::st/line-number)
-               (->> e ::st/output ::st/line-number)]))
-       (filter (fn [[a b]] (and a b)))
-       (map (fn [[a b]] [(- a 1) (- b 1)]))
-       (into {})))
-
 (defn lookup
-  [line-map editor line]
-  (get-in line-map [editor line]))
+  [line-map editor-ix line-ix]
+  (get-in line-map [editor-ix line-ix]))

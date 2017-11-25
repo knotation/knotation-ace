@@ -18,57 +18,38 @@
      ;;   (doseq [p line-pairs]
      ;;     (.log js/console "  " (clj->js p))))
 
-(defn compile-contents-to
-  [line-map-atom & editors]
-  (let [ct (count editors)
-        processed (api/run-operations
-                   (conj
-                    (vec (map #(api/input :kn (.getValue source))))
-                    (api/output :ttl)))
-        result (->> processed
-                    (map #(->> % ::st/output ::st/lines first))
-                    (filter identity)
-                    (string/join "\n"))
-        line-map (ln/compiled->line-map processed)]
-    (.setValue (last editors) result)
-    (reset! line-map-atom line-map)))
 
 (defn compiled->content
   [compiled]
-  (string/join "\n" (filter identity (map (fn [e] (->> e ::st/output ::st/lines first)) processed))))
+  (->> compiled
+       (map #(->> % ::st/output ::st/lines first))
+       (filter identity)
+       (string/join "\n")))
 
 (defn compile-content-to
-  [line-map-atom source target]
-  (let [processed (api/run-operations [(api/input :kn (.getValue source)) (api/output :ttl)])
+  [line-map-atom editors]
+  (let [ct (count editors)
+        outp (last editors)
+        inp (last (butlast editors))
+        prefs (butlast (butlast editors))
+        processed (api/run-operations
+                   (conj
+                    (conj
+                     (vec (map #(api/env :kn (.getValue %)) prefs))
+                     (api/input :kn (.getValue inp)))
+                    (api/output :ttl)))
         result (compiled->content processed)
         line-map (ln/compiled->line-map processed)]
-    (.setValue target result)
+    (.setValue outp result)
     (reset! line-map-atom line-map)))
 
-(defn compiles
-  [a b c]
-  (.log js/console
-        "END CONTENT:"
-        (clj->js (->> (api/run-operations
-                       [(api/input :kn (.getValue a))
-                        (api/input :kn (.getValue b))
-                        (api/output :ttl)])
-                      (mapcat #(->> % ::st/output ::st/lines))
-                      (string/join "\n"))))
-  (clj->js
-   (ln/compiledToLineMap
-    (api/run-operations
-     [(api/input :kn (.getValue a))
-      (api/input :kn (.getValue b))
-      (api/output :ttl)]))))
-
 (defn cross->update!
-  [line-map-atom editor-a editor-b]
-  (.on editor-a "changes"
+  [line-map-atom editors]
+  (.on (first editors) "changes"
        (util/debounce
         (fn [cs]
-          (let [ln (util/current-line editor-a)]
-            (compile-content-to line-map-atom editor-a editor-b)
-            (high/cross->highlight! @line-map-atom editor-a editor-b)
-            (util/scroll-into-view! editor-b :line ln)))
+          (let [ln (util/current-line (first editors))]
+            (compile-content-to line-map-atom editors)
+            (high/cross->highlight! @line-map-atom 0 editors)
+            (util/scroll-into-view! (second editors) :line ln)))
         500)))

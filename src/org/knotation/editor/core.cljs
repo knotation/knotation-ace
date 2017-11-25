@@ -88,11 +88,12 @@
     (apply editor! editor-selector (mapcat identity opts))))
 
 (defn linked
-  [editor-a editor-b]
+  [editors]
   (let [line-map (atom {})]
 
-    (update/compile-content-to line-map editor-a editor-b)
-    (update/cross->update! line-map editor-a editor-b)
+    (update/compile-content-to line-map editors)
+    (update/cross->update! line-map editors)
 
-    (high/cross<->highlight! line-map editor-a editor-b)
-    (high/subject-highlight-on-move! editor-a)))
+    (high/cross<->highlight! line-map editors)
+    (doseq [e (butlast editors)]
+      (high/subject-highlight-on-move! e))))

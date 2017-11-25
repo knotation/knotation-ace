@@ -1,6 +1,7 @@
 (ns org.knotation.editor.highlight
   (:require [clojure.set :as set]
 
+            [org.knotation.editor.line-map :as ln]
             [org.knotation.editor.util :as util]))
 
 (defn clear-line-highlights!
@@ -31,17 +32,19 @@
   (.on ed "cursorActivity" (fn [ed] (highlight-by-subject! ed (util/current-line ed)))))
 
 (defn cross->highlight!
-  [line-map editor-a editor-b]
-  (clear-line-highlights! editor-a editor-b)
-  (let [ln-from (util/current-line editor-a)]
-    (when-let [ln-to (get line-map ln-from)]
-      (highlight-line! editor-a ln-from)
-      (highlight-line! editor-b ln-to)
-      (util/scroll-into-view! editor-b :line ln-to))))
+  [line-map source-ix editors]
+  (apply clear-line-highlights! editors)
+  (let [ed-from (get editors source-ix)
+        ln-from (util/current-line ed-from)]
+    (when-let [[ed-to-ix ln-to] (ln/lookup line-map source-ix ln-from)]
+      (let [ed-to (if (= :out ed-to-ix) (last editors) (get editors ed-to-ix))]
+        (highlight-line! ed-from ln-from)
+        (highlight-line! ed-to ln-to)
+        (util/scroll-into-view! ed-to :line ln-to)))))
 
 (defn cross<->highlight!
-  [line-map-atom editor-a editor-b]
-  (.on editor-a "cursorActivity"
-       (fn [_] (cross->highlight! @line-map-atom editor-a editor-b)))
-  (.on editor-b "cursorActivity"
-       (fn [_] (cross->highlight! (set/map-invert @line-map-atom) editor-b editor-a))))
+  [line-map-atom editors]
+  (.on (first editors) "cursorActivity"
+       (fn [_] (cross->highlight! @line-map-atom 0 editors)))
+  (.on (second editors) "cursorActivity"
+       (fn [_] (cross->highlight! @line-map-atom 1 editors))))
