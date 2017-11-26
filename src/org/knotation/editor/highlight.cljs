@@ -34,7 +34,7 @@
 (defn cross->highlight!
   [line-map source-ix editors]
   (apply clear-line-highlights! editors)
-  (let [ed-from (get editors source-ix)
+  (let [ed-from (if (= :out source-ix) (last editors) (get editors source-ix))
         ln-from (util/current-line ed-from)]
     (when-let [[ed-to-ix ln-to] (ln/lookup line-map source-ix ln-from)]
       (let [ed-to (if (= :out ed-to-ix) (last editors) (get editors ed-to-ix))]
@@ -44,7 +44,8 @@
 
 (defn cross<->highlight!
   [line-map-atom editors]
-  (.on (first editors) "cursorActivity"
-       (fn [_] (cross->highlight! @line-map-atom 0 editors)))
-  (.on (second editors) "cursorActivity"
-       (fn [_] (cross->highlight! @line-map-atom 1 editors))))
+  (doseq [[ix e] (map-indexed vector (butlast editors))]
+    (.on e "cursorActivity"
+         (fn [_] (cross->highlight! @line-map-atom ix editors))))
+  (.on (last editors) "cursorActivity"
+       (fn [_] (cross->highlight! @line-map-atom :out editors))))

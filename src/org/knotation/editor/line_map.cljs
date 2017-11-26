@@ -18,7 +18,7 @@
          :map (if (and in out)
                 (assoc-in
                  (assoc-in m [ed (dec in)] [:out (dec out)])
-                 [:out out] [ed (dec in)])
+                 [:out (dec out)] [ed (dec in)])
                 m)}))
     {:ed 0 :map {}}
     compiled)))
