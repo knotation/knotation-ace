@@ -16,13 +16,13 @@
             m (:map memo)]
         {:ed ed
          :map (if (and in out)
-                (assoc-in
-                 (assoc-in m [ed (dec in)] [:out (dec out)])
-                 [:out (dec out)] [ed (dec in)])
+                (update-in
+                 (update-in m [ed (dec in)] #(conj (or % #{}) [:out (dec out)]))
+                 [:out (dec out)] #(conj (or % #{})  [ed (dec in)]))
                 m)}))
     {:ed 0 :map {}}
     compiled)))
 
 (defn lookup
   [line-map editor-ix line-ix]
-  (get-in line-map [editor-ix line-ix]))
+  (get-in line-map [editor-ix line-ix] #{}))

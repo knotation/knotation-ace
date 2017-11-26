@@ -36,7 +36,7 @@
   (apply clear-line-highlights! editors)
   (let [ed-from (if (= :out source-ix) (last editors) (get editors source-ix))
         ln-from (util/current-line ed-from)]
-    (when-let [[ed-to-ix ln-to] (ln/lookup line-map source-ix ln-from)]
+    (doseq [[ed-to-ix ln-to] (ln/lookup line-map source-ix ln-from)]
       (let [ed-to (if (= :out ed-to-ix) (last editors) (get editors ed-to-ix))]
         (highlight-line! ed-from ln-from)
         (highlight-line! ed-to ln-to)
