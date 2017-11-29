@@ -1,5 +1,6 @@
 (ns org.knotation.editor.update
   (:require [clojure.string :as string]
+            [crate.core :as crate]
 
             [org.knotation.api :as api]
             [org.knotation.state :as st]
@@ -18,13 +19,30 @@
      ;;   (doseq [p line-pairs]
      ;;     (.log js/console "  " (clj->js p))))
 
-
 (defn compiled->content
   [compiled]
   (->> compiled
-       (map #(->> % ::st/output ::st/lines first))
+       (mapcat #(->> % ::st/output ::st/lines))
        (filter identity)
        (string/join "\n")))
+
+(defn mark-errors!
+  [compiled editors]
+  (let [cur-ed (atom 0)]
+    (doseq [elem compiled]
+      (let [ev (::st/event elem)]
+        (case (::st/event elem)
+          ::st/graph-end
+          (swap! cur-ed inc)
+
+          ::st/error
+          (let [ed (get editors @cur-ed)
+                in (::st/input elem)
+                ln-num (- (::st/line-number in) 1)]
+            ;; (high/highlight-line! ed ln-num "line-error")
+            (.setGutterMarker ed ln-num "errors" (crate/html [:div {:style "color: #822"} ">>"])))
+
+          nil)))))
 
 (defn compile-content-to
   [line-map-atom editors]
@@ -40,6 +58,7 @@
                     (api/output :ttl)))
         result (compiled->content processed)
         line-map (ln/compiled->line-map processed)]
+    (mark-errors! processed editors)
     (.setValue outp result)
     (reset! line-map-atom line-map)))
 
