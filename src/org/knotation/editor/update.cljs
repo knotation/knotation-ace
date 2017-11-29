@@ -40,7 +40,7 @@
                 in (::st/input elem)
                 ln-num (- (::st/line-number in) 1)]
             ;; (high/highlight-line! ed ln-num "line-error")
-            (.setGutterMarker ed ln-num "errors" (crate/html [:div {:style "color: #822"} ">>"])))
+            (.setGutterMarker ed ln-num "errors" (crate/html [:div {:style "color: #822"} "▶"])))
 
           nil)))))
 
