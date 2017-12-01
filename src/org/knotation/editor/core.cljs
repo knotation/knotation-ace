@@ -59,8 +59,24 @@
   [ed commands]
   (addCommands ed (clj->js commands)))
 
+(defn -ev->token
+  [ed ev]
+  (let [char (.coordsChar ed (clj->js {:left (.-pageX ev) :top (.-pageY ev)}))
+        line (.-line char)
+        token (.getTokenAt ed (clj->js {:line line :ch (.-ch char)}))]
+    (set! (.-line token) line)
+    token))
+
+(defn on-hover [ed f]
+  (set! (.-onmouseover (.getWrapperElement ed)) #(f (-ev->token ed %))))
+(def onHover on-hover)
+
+(defn on-leave [ed f]
+  (set!  (.-onmouseout (.getWrapperElement ed)) #(f (-ev->token ed %))))
+(def onLeave on-leave)
+
 (defn editor!
-  [editor-selector & {:keys [mode theme on-hover focus?]
+  [editor-selector & {:keys [mode theme focus?]
                       :or {mode "sparql" theme "default" focus? true}}]
   (styles/apply-style!)
   (let [elem (.querySelector js/document editor-selector)
@@ -71,13 +87,13 @@
              (.fromTextArea js/CodeMirror elem opts)
              (js/CodeMirror elem opts))]
 
-    (when on-hover
-      (set! (.-onmouseover (.getWrapperElement ed))
-            (fn [ev]
-              (let [char (.coordsChar ed (clj->js {:left (.-clientX ev) :top (.-clientY ev)}))
-                    token (.getTokenAt ed (clj->js {:line (.-line char) :ch (.-ch char)}))]
-                (set! (.-line token) (.-line char))
-                (on-hover token)))))
+    (on-hover
+     ed (fn [token]
+          (let [ln (.-line token)
+                all-errs (.querySelectorAll (.getWrapperElement ed) ".line-error-message")
+                err (.querySelector (.getWrapperElement ed) (str ".line-error-message.line-" ln))]
+            (.forEach all-errs #(.add (.-classList %) "hidden"))
+            (when err (.remove (.-classList err) "hidden")))))
 
     ed))
 

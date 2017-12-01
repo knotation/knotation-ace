@@ -29,9 +29,11 @@
 (defn clear-line-errors!
   [eds]
   (high/clear-line-highlights! eds ["line-error"])
-  (doseq [e eds]
-    (doseq [i (util/line-range e)]
-      (.setGutterMarker e i "line-errors" nil)))
+  (doseq [ed eds]
+    (.forEach (.querySelectorAll (.getWrapperElement ed) ".line-error-message")
+              #(.remove %))
+    (doseq [i (util/line-range ed)]
+      (.setGutterMarker ed i "line-errors" nil)))
   nil)
 
 (defn mark-line-errors!
@@ -47,7 +49,14 @@
           (let [ed (get editors @cur-ed)
                 in (::st/input elem)
                 ln-num (- (::st/line-number in) 1)]
+            (.log js/console "ERROR TOKEN" (clj->js @(.-state (.getTokenAt ed (clj->js {:line ln-num :ch 0})))))
+            (.log js/console "  something" (clj->js elem))
             (high/highlight-line! ed ln-num "line-error")
+            (.addWidget
+             ed (clj->js {:line ln-num :ch 0})
+             (crate/html
+              [:pre {:class (str "line-error-message hidden line-" ln-num)}
+               (->> elem ::st/error ::st/error-message)]))
             (.setGutterMarker ed ln-num "line-errors" (crate/html [:div {:style "color: #822"} "▶"])))
 
           nil)))))

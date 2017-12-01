@@ -7,9 +7,9 @@
 (defn clear-line-highlights!
   ([eds] (clear-line-highlights! eds ["highlight" "current-subject"]))
   ([eds classes]
-   (doseq [e eds]
-     (doseq [i (util/line-range e)]
-       (.removeLineClass e i "background")))))
+   (doseq [e eds
+           i (util/line-range e)]
+     (.removeLineClass e i "background"))))
 (def clearLineHighlights clear-line-highlights!)
 
 (defn highlight-line!
