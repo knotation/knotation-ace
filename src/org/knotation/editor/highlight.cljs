@@ -5,10 +5,11 @@
             [org.knotation.editor.util :as util]))
 
 (defn clear-line-highlights!
-  [& eds]
-  (doseq [e eds]
-    (doseq [i (util/line-range e)]
-      (.removeLineClass e i "background"))))
+  ([eds] (clear-line-highlights! eds ["highlight" "current-subject"]))
+  ([eds classes]
+   (doseq [e eds]
+     (doseq [i (util/line-range e)]
+       (.removeLineClass e i "background")))))
 (def clearLineHighlights clear-line-highlights!)
 
 (defn highlight-line!
@@ -33,7 +34,7 @@
 
 (defn cross->highlight!
   [line-map source-ix editors]
-  (apply clear-line-highlights! editors)
+  (clear-line-highlights! editors)
   (let [ed-from (if (= :out source-ix) (last editors) (get editors source-ix))
         ln-from (util/current-line ed-from)]
     (doseq [[ed-to-ix ln-to] (ln/lookup line-map source-ix ln-from)]

@@ -347,10 +347,10 @@ div.CodeMirror-dragcursors {
 /* Help users use markselection to safely style text background */
 span.CodeMirror-selectedtext { background: none; }")
 
-(def line-styles ".current-subject { background-color: #91ff87; }
+(def line-styles ".line-error { background-color: red; }
+.current-subject { background-color: #91ff87; }
 .highlight { background-color: #f4f142; }
-.line-error { background-color: red; }
-.errors {width: .8em; }")
+.line-errors { width: .8em; }")
 
 (def applied? (atom false))
 (def cm-styles (atom [cm-default line-styles]))
