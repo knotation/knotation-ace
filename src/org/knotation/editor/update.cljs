@@ -40,26 +40,34 @@
   [compiled editors]
   (let [cur-ed (atom 0)]
     (doseq [elem compiled]
-      (let [ev (::st/event elem)]
-        (case (::st/event elem)
-          ::st/graph-end
-          (swap! cur-ed inc)
+      (case (::st/event elem)
+        ::st/graph-end
+        (swap! cur-ed inc)
 
-          ::st/error
-          (let [ed (get editors @cur-ed)
-                in (::st/input elem)
-                ln-num (- (::st/line-number in) 1)]
-            (.log js/console "ERROR TOKEN" (clj->js @(.-state (.getTokenAt ed (clj->js {:line ln-num :ch 0})))))
-            (.log js/console "  something" (clj->js elem))
-            (high/highlight-line! ed ln-num "line-error")
-            (.addWidget
-             ed (clj->js {:line ln-num :ch 0})
-             (crate/html
-              [:pre {:class (str "line-error-message hidden line-" ln-num)}
-               (->> elem ::st/error ::st/error-message)]))
-            (.setGutterMarker ed ln-num "line-errors" (crate/html [:div {:style "color: #822"} "▶"])))
+        ::st/error
+        (let [ed (get editors @cur-ed)
+              in (::st/input elem)
+              ln-num (dec (::st/line-number in))]
+          (high/highlight-line! ed ln-num "line-error")
+          (.addWidget
+           ed (clj->js {:line ln-num :ch 0})
+           (crate/html
+            [:pre {:class (str "line-error-message hidden line-" ln-num)}
+             (->> elem ::st/error ::st/error-message)]))
+          (.setGutterMarker ed ln-num "line-errors" (crate/html [:div {:style "color: #822"} "▶"])))
 
-          nil)))))
+        nil))))
+
+(defn partition-graphs
+  [processed]
+  (let [a (volatile! 0)]
+    (partition-by
+     (fn [elem]
+       (let [res @a]
+         (when (= ::st/graph-end (::st/event elem))
+           (vswap! a inc))
+         res))
+     processed)))
 
 (defn compile-content-to
   [line-map-atom editors]
@@ -75,18 +83,23 @@
                     (api/output :ttl)))
         result (compiled->content processed)
         line-map (ln/compiled->line-map processed)]
+    (doseq [[ed graph] (map (fn [a b] [a b]) (butlast editors) (partition-graphs processed))]
+      (set! (.-graph (.-knotation ed)) graph))
     (clear-line-errors! editors)
     (mark-line-errors! processed editors)
     (.setValue outp result)
-    (reset! line-map-atom line-map)))
+    (reset! line-map-atom line-map)
+    processed))
 
 (defn cross->update!
-  [line-map-atom editors]
+  [line-map-atom compiled-atom editors]
   (doseq [[ix e] (map-indexed vector (butlast editors))]
     (.on e "changes"
          (util/debounce
           (fn [cs]
-            (let [ln (util/current-line e)]
-              (compile-content-to line-map-atom editors)
+            (let [ln (util/current-line e)
+                  result (compile-content-to line-map-atom editors)]
+              (reset! compiled-atom result)
+              (.log js/console "COMPILED" (clj->js @compiled-atom))
               (high/cross->highlight! @line-map-atom ix editors)))
           500))))

@@ -348,7 +348,7 @@ div.CodeMirror-dragcursors {
 span.CodeMirror-selectedtext { background: none; }")
 
 (def line-styles ".line-error { background-color: red; }
-.CodeMirror .line-error-message { border: 1px solid black; border-radius: 4px; margin: 5px; background-color: #f77171; }
+.CodeMirror .line-error-message { border: 1px solid black; border-radius: 4px; margin-left: 5px; background-color: #f77171; }
 
 .current-subject { background-color: #f8f8f8; }
 .highlight { background-color: #f0f0f0; }

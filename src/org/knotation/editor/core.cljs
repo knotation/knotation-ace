@@ -87,6 +87,15 @@
              (.fromTextArea js/CodeMirror elem opts)
              (js/CodeMirror elem opts))]
 
+    (set! (.-knotation ed)
+          (clj->js {:getCompiled
+                     (fn [] (clj->js (or (.-graph (.-knotation ed)) [])))
+
+                    :getCompiledLine
+                    (fn [ln-num]
+                      (when-let [g (.-graph (.-knotation ed))]
+                        (clj->js (first (filter #(= (inc ln-num) (->> % ::st/input ::st/line-number)) g)))))}))
+
     (on-hover
      ed (fn [token]
           (let [ln (.-line token)
@@ -107,10 +116,10 @@
 
 (defn linked
   [editors]
-  (let [line-map (atom {})]
+  (let [line-map (atom {})
+        compiled (atom (update/compile-content-to line-map editors))]
 
-    (update/compile-content-to line-map editors)
-    (update/cross->update! line-map editors)
+    (update/cross->update! line-map compiled editors)
 
     (high/cross<->highlight! line-map editors)
     (doseq [e (butlast editors)]
