@@ -65,6 +65,7 @@
         line (.-line char)
         token (.getTokenAt ed (clj->js {:line line :ch (.-ch char)}))]
     (set! (.-line token) line)
+    (set! (.-compiled token) (.getCompiledLine (.-knotation ed) line))
     token))
 
 (defn add-hook! [ed key f]
