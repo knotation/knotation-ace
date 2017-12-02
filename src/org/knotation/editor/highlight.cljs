@@ -47,6 +47,7 @@
   [line-map-atom editors]
   (doseq [[ix e] (map-indexed vector (butlast editors))]
     (.on e "cursorActivity"
-         (fn [_] (cross->highlight! @line-map-atom ix editors))))
-  (.on (last editors) "cursorActivity"
-       (fn [_] (cross->highlight! @line-map-atom :out editors))))
+         (fn [_] (when (.hasFocus e) (cross->highlight! @line-map-atom ix editors)))))
+  (let [out (last editors)]
+    (.on out "cursorActivity"
+         (fn [_] (when (.hasFocus out) (cross->highlight! @line-map-atom :out editors))))))

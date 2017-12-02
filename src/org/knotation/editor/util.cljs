@@ -28,5 +28,5 @@
   (range 0 (.lineCount ed)))
 
 (defn scroll-into-view!
-  [ed & {:keys [line ch] :or {ch 0}}]
-  (.scrollIntoView ed (clj->js {:line line :ch ch})))
+  [ed & {:keys [line ch margin] :or {ch 0 margin 60}}]
+  (.scrollIntoView ed (clj->js {:line line :ch ch}) margin))

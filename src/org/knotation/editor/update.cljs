@@ -100,6 +100,5 @@
             (let [ln (util/current-line e)
                   result (compile-content-to line-map-atom editors)]
               (reset! compiled-atom result)
-              (.log js/console "COMPILED" (clj->js @compiled-atom))
               (high/cross->highlight! @line-map-atom ix editors)))
           500))))
