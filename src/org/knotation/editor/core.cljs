@@ -67,13 +67,18 @@
     (set! (.-line token) line)
     token))
 
-(defn on-hover [ed f]
-  (set! (.-onmouseover (.getWrapperElement ed)) #(f (-ev->token ed %))))
-(def onHover on-hover)
+(defn add-hook! [ed key f]
+  (swap! (:on-hover (.-hooks ed)) conj f))
 
-(defn on-leave [ed f]
-  (set!  (.-onmouseout (.getWrapperElement ed)) #(f (-ev->token ed %))))
-(def onLeave on-leave)
+(defn run-hooks! [ed key ev]
+  (doseq [h @(get (.-hooks ed) key)]
+    (h (-ev->token ed ev))))
+
+(defn on-hover! [ed f] (add-hook! ed :on-hover f))
+(def onHover on-hover!)
+
+(defn on-leave! [ed f] (add-hook! ed :on-hover f))
+(def onLeave on-leave!)
 
 (defn editor!
   [editor-selector & {:keys [mode theme focus?]
@@ -96,7 +101,11 @@
                       (when-let [g (.-graph (.-knotation ed))]
                         (clj->js (first (filter #(= (inc ln-num) (->> % ::st/input ::st/line-number)) g)))))}))
 
-    (on-hover
+    (set! (.-hooks ed) {:on-hover (atom []) :on-leave (atom [])})
+    (set! (.-onmouseover (.getWrapperElement ed)) #(run-hooks! ed :on-hover %))
+    (set! (.-onmouseout (.getWrapperElement ed)) #(run-hooks! ed :on-leave %))
+
+    (on-hover!
      ed (fn [token]
           (let [ln (.-line token)
                 all-errs (.querySelectorAll (.getWrapperElement ed) ".line-error-message")
