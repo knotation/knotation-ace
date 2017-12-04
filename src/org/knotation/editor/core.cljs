@@ -95,12 +95,12 @@
 
     (set! (.-knotation ed)
           (clj->js {:getCompiled
-                     (fn [] (clj->js (or (.-graph (.-knotation ed)) [])))
+                    (fn [] (or (.-graph (.-knotation ed)) []))
 
                     :getCompiledLine
                     (fn [ln-num]
                       (when-let [g (.-graph (.-knotation ed))]
-                        (clj->js (first (filter #(= (inc ln-num) (->> % ::st/input ::st/line-number)) g)))))}))
+                        (first (filter #(= (inc ln-num) (->> % ::st/input ::st/line-number)) g))))}))
 
     (set! (.-hooks ed) {:on-hover (atom []) :on-leave (atom [])})
     (set! (.-onmouseover (.getWrapperElement ed)) #(run-hooks! ed :on-hover %))
