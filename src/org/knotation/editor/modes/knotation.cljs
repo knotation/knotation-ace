@@ -46,22 +46,15 @@
                        (swap! state assoc :subject sub)
                        "subject")
 
-                     (and sol? (.match stream #".*?:" false))
-                     (let [[_ pred] (.match stream #"(.*?):")]
+                     (and sol? (.match stream #".*?: " false))
+                     (let [[_ pred] (.match stream #"(.*?): ")]
                        (when (and (prefix? state pred) (not (.eatSpace stream)))
-                         (.match stream #".*?:"))
+                         (.match stream #".*?: "))
                        "predicate")
-
-                     (.match stream #".*?: " false)
-                     (do (.match stream #".*?:") "name")
 
                      (match? #".*?:.*") "prefixed-name"
 
                      :else (do (.skipToEnd stream) "term"))))]
      (clj->js {:startState (fn [] (atom {:env {}})) :copyState (fn [state] (atom @state))
                :token token
-               ;; :indent (fn [state _textAfter] 0)
-               :closeBrackets {:pairs "()[]{}\"\""}
-               ;; :blockCommentStart "#|"
-               ;; :blockCommentEnd "|#"
-               }))))
+               :closeBrackets {:pairs "()[]{}\"\""}}))))
