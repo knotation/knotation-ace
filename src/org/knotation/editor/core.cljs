@@ -8,6 +8,7 @@
 
             [org.knotation.editor.styles :as styles]
             [org.knotation.editor.util :as util]
+            [org.knotation.editor.line-map :as ln]
             [org.knotation.editor.highlight :as high]
             [org.knotation.editor.update :as update]
 
@@ -124,13 +125,20 @@
                     (dissoc (js->clj options :keywordize-keys true) :focus))]
     (apply editor! editor-selector (mapcat identity opts))))
 
-(defn linked
-  [editors]
-  (let [line-map (atom {})
-        compiled (atom (update/compile-content-to line-map editors))]
+(defn linked-editors
+  [& {:keys [env prefix
+             input
+             ttl nq rdfa]}]
+  (.log js/console "ENV" env "PREFIX" prefix "INPUT" input "TTL" ttl "NQ" nq "RDFA" rdfa)
+  (let [line-map (atom ln/empty)]
+    (update/cross->>update! line-map :env env :input input :ttl ttl :nq nq)
+    (high/cross<->highlight! line-map (conj env input ttl))
+    (doseq [e (conj env input)] (high/subject-highlight-on-move! e))))
 
-    (update/cross->update! line-map compiled editors)
-
-    (high/cross<->highlight! line-map editors)
-    (doseq [e (butlast editors)]
-      (high/subject-highlight-on-move! e))))
+(defn linkedEditors
+  [options]
+  (let [opts (js->clj options :keywordize-keys true)]
+    ;; the more obvious (apply linked-ediors (select-keys opts [...])) doesn't work here for some reason.
+    ;; It's a bug in either the CLJS implementation of apply or select-keys
+    (linked-editors :env (:env opts) :prefix (:prefix opts) :input (:input opts)
+                    :ttl (:ttl opts) :nq (:nq opts) :rdfa (:rdfa opts))))

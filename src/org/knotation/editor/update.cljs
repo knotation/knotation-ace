@@ -70,35 +70,40 @@
      processed)))
 
 (defn compile-content-to
-  [line-map-atom editors]
-  (let [ct (count editors)
-        outp (last editors)
-        inp (last (butlast editors))
-        prefs (butlast (butlast editors))
-        processed (api/run-operations
+  [line-map-atom & {:keys [env input format output] :or {format :ttl}}]
+  (.log js/console "compile-content-to " "INPUT:" input)
+  (let [processed (api/run-operations
                    (conj
                     (conj
-                     (vec (map #(api/env :kn (.getValue %)) prefs))
-                     (api/input :kn (.getValue inp)))
-                    (api/output :ttl)))
+                     (vec (map #(api/env :kn (.getValue %)) env))
+                     (api/input :kn (.getValue input)))
+                    (api/output format)))
         result (compiled->content processed)
         line-map (ln/compiled->line-map processed)]
-    (doseq [[ed graph] (map (fn [a b] [a b]) (butlast editors) (partition-graphs processed))]
+    (doseq [[ed graph] (map (fn [a b] [a b]) (conj env input) (partition-graphs processed))]
       (set! (.-graph (.-knotation ed)) graph))
-    (clear-line-errors! editors)
-    (mark-line-errors! processed editors)
-    (.setValue outp result)
+    (clear-line-errors! (conj env input))
+    (mark-line-errors! processed (conj env input))
+    (.setValue output result)
     (reset! line-map-atom line-map)
     processed))
 
 (defn cross->update!
-  [line-map-atom compiled-atom editors]
-  (doseq [[ix e] (map-indexed vector (butlast editors))]
-    (.on e "changes"
-         (util/debounce
-          (fn [cs]
-            (let [ln (util/current-line e)
-                  result (compile-content-to line-map-atom editors)]
-              (reset! compiled-atom result)
-              (high/cross->highlight! @line-map-atom ix editors)))
-          500))))
+  [line-map-atom & {:keys [env input   output format]}]
+  (let [compiled-atom (atom nil)]
+    (compile-content-to line-map-atom :env env :input input :output output :format format)
+    (doseq [[ix e] (map-indexed vector (conj env input))]
+      (.on e "changes"
+           (util/debounce
+            (fn [cs]
+              (reset! line-map-atom ln/empty)
+              (let [ln (util/current-line e)
+                    result (compile-content-to line-map-atom :env env :input input :output output :format format)]
+                (reset! compiled-atom result)
+                (high/cross->highlight! @line-map-atom ix (conj env input output))))
+            500)))))
+
+(defn cross->>update!
+  [line-map-atom & {:keys [env input   ttl nq rdfa]}]
+  (let [update! (fn [ed format] (when ed (cross->update! line-map-atom :env env :input input :output ed :format format)))]
+    (update! ttl :ttl) (update! nq :nq) (update! rdfa :rdfa)))
