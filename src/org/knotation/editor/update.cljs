@@ -9,16 +9,6 @@
             [org.knotation.editor.line-map :as ln]
             [org.knotation.editor.highlight :as high]))
 
-     ;; (let [opts {::api/operation-type :render ::st/format :ttl}
-     ;;       processed (api/run-operations [(api/kn (.getValue editor-a)) opts])
-     ;;       result (string/join "\n" (filter identity (map (fn [e] (->> e ::st/output ::st/lines first)) processed)))
-     ;;       line-pairs (map (fn [e] [(->> e ::st/input ::st/line-number) (->> e ::st/output ::st/line-number)]) processed)]
-     ;;   (.setValue editor-b result)
-     ;;   (reset! line-map (into {} (map (fn [e][(->> e ::st/input ::st/line-number) (->> e ::st/output ::st/line-number)]) processed)))
-     ;;   ;; (.log js/console "NEW LINE-MAP" (clj->js ))
-     ;;   (doseq [p line-pairs]
-     ;;     (.log js/console "  " (clj->js p))))
-
 (defn compiled->content
   [compiled]
   (->> compiled
@@ -71,12 +61,10 @@
 
 (defn compile-content-to
   [line-map-atom & {:keys [env input format output] :or {format :ttl}}]
-  (.log js/console "compile-content-to " "INPUT:" input)
   (let [processed (api/run-operations
                    (conj
-                    (conj
-                     (vec (map #(api/env :kn (.getValue %)) env))
-                     (api/input :kn (.getValue input)))
+                    (vec (map #(api/env :kn (.getValue %)) env))
+                    (api/input :kn (.getValue input))
                     (api/output format)))
         result (compiled->content processed)
         line-map (ln/compiled->line-map processed)]
