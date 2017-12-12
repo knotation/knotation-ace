@@ -129,7 +129,6 @@
   [& {:keys [env prefix
              input
              ttl nq rdfa]}]
-  (.log js/console "ENV" env "PREFIX" prefix "INPUT" input "TTL" ttl "NQ" nq "RDFA" rdfa)
   (let [line-map (atom ln/empty)]
     (update/cross->>update! line-map :env env :input input :ttl ttl :nq nq)
     (high/cross<->highlight! line-map (conj env input ttl))
