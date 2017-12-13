@@ -128,7 +128,8 @@
 (defn linked-editors
   [& {:keys [env prefix
              input
-             ttl nq rdfa]}]
+             ttl nq rdfa]
+      :or {env [] prefix []}}]
   (let [line-map (atom ln/empty)]
     (update/cross->>update! line-map :env env :input input :ttl ttl :nq nq)
     (high/cross<->highlight! line-map (conj env input ttl))
