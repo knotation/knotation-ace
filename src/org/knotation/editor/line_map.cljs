@@ -7,9 +7,20 @@
 
 (def empty {})
 
+(defn partition-graphs
+  [processed]
+  (let [a (volatile! 0)]
+    (partition-by
+     (fn [elem]
+       (let [res @a]
+         (when (= ::st/graph-end (::st/event elem))
+           (vswap! a inc))
+         res))
+     processed)))
+
 (defn compiled->line-map
-  ([compiled] (compiled->line-map empty compiled))
-  ([line-map compiled]
+  ([compiled editors] (compiled->line-map empty compiled editors))
+  ([line-map compiled editors]
    (let [modified
          (fn [m ed in out]
            (if (and in out)
@@ -25,8 +36,7 @@
                out (::st/line-number (::st/output elem))
                lns (count (::st/lines (::st/input elem)))
                m (:map memo)]
-           {:ed ed
-            :map (reduce (fn [m delta] (modified m ed (+ delta in) (+ delta out))) m (range lns))}))
+           {:ed ed :map (reduce (fn [m delta] (modified m ed (+ delta in) (+ delta out))) m (range lns))}))
        {:ed 0 :map line-map}
        compiled)))))
 

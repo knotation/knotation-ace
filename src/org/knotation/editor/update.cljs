@@ -48,17 +48,6 @@
 
         nil))))
 
-(defn partition-graphs
-  [processed]
-  (let [a (volatile! 0)]
-    (partition-by
-     (fn [elem]
-       (let [res @a]
-         (when (= ::st/graph-end (::st/event elem))
-           (vswap! a inc))
-         res))
-     processed)))
-
 (defn compile-content-to
   [line-map-atom & {:keys [env input format output] :or {format :ttl}}]
   (let [processed (api/run-operations
@@ -67,8 +56,8 @@
                     (api/input :kn (.getValue input))
                     (api/output format)))
         result (compiled->content processed)
-        line-map (ln/compiled->line-map processed)]
-    (doseq [[ed graph] (map (fn [a b] [a b]) (conj env input) (partition-graphs processed))]
+        line-map (ln/compiled->line-map processed (conj env input))]
+    (doseq [[ed graph] (util/zip (conj env input) (ln/partition-graphs processed))]
       (set! (.-graph (.-knotation ed)) graph))
     (clear-line-errors! (conj env input))
     (mark-line-errors! processed (conj env input))

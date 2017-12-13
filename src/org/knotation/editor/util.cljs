@@ -30,3 +30,6 @@
 (defn scroll-into-view!
   [ed & {:keys [line ch margin] :or {ch 0 margin 0}}]
   (.scrollIntoView ed (clj->js {:line line :ch ch}) margin))
+
+(defn zip [& lists]
+  (apply map (fn [& args] (vec args)) lists))
