@@ -45,9 +45,8 @@
 
 (defn cross<->highlight!
   [line-map-atom editors]
-  (doseq [[ix e] (map-indexed vector (butlast editors))]
-    (.on e "cursorActivity"
-         (fn [_] (when (.hasFocus e) (cross->highlight! @line-map-atom ix editors)))))
-  (let [out (last editors)]
-    (.on out "cursorActivity"
-         (fn [_] (when (.hasFocus out) (cross->highlight! @line-map-atom :out editors))))))
+  (let [setup (fn [ed ix]
+                (.on ed "cursorActivity" (fn [_] (when (.hasFocus ed) (cross->highlight! @line-map-atom ix editors))))
+                (.on ed "focus" (fn [_] (cross->highlight! @line-map-atom ix editors))))]
+    (doseq [[ix e] (map-indexed vector (butlast editors))] (setup e ix))
+    (setup (last editors) :out)))
