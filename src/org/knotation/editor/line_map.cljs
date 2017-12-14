@@ -36,7 +36,7 @@
                out (::st/line-number (::st/output elem))
                lns (count (::st/lines (::st/input elem)))
                m (:map memo)]
-           {:ed ed :map (reduce (fn [m delta] (modified m ed (+ delta in) (+ delta out))) m (range lns))}))
+           {:ed ed :map (modified m ed in out)}))
        {:ed 0 :map line-map}
        compiled)))))
 

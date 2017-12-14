@@ -62,6 +62,7 @@
     (clear-line-errors! (conj env input))
     (mark-line-errors! processed (conj env input))
     (.setValue output result)
+    (.signal js/CodeMirror output "compiled-to" output result)
     (reset! line-map-atom line-map)
     processed))
 
