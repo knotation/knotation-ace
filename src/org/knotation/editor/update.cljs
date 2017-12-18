@@ -77,8 +77,7 @@
               (reset! line-map-atom ln/empty)
               (let [ln (util/current-line e)
                     result (compile-content-to line-map-atom :env env :input input :output output :format format)]
-                (reset! compiled-atom result)
-                (high/cross->highlight! @line-map-atom ix (conj env input output))))
+                (reset! compiled-atom result)))
             500)))))
 
 (defn cross->>update!

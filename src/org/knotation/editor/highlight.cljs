@@ -33,22 +33,25 @@
   (.on ed "cursorActivity" (fn [ed] (highlight-by-subject! ed (util/current-line ed)))))
 
 (defn cross->highlight!
-  [line-map source-ix editors]
+  [line-map source-ix editors format]
   (clear-line-highlights! editors)
   (let [ed-from (if (number? source-ix) (get editors source-ix) (last editors))
         ln-from (util/current-line ed-from)]
     (doseq [entry (ln/lookup line-map source-ix ln-from)]
       (let [ed-to-ix (first entry)
-            ln-to (second entry)
-            ed-to (if (number? ed-to-ix) (get editors ed-to-ix) (last editors))]
-        (highlight-line! ed-from ln-from)
-        (highlight-line! ed-to ln-to)
-        (util/scroll-into-view! ed-to :line ln-to)))))
+            ln-to (second entry)]
+        (when-let [ed-to (cond (= format ed-to-ix) (last editors)
+                               (number? ed-to-ix) (get editors ed-to-ix)
+                               :else false)]
+          (highlight-line! ed-from ln-from)
+          (highlight-line! ed-to ln-to)
+          (util/scroll-into-view! ed-to :line ln-to))))))
 
 (defn cross<->highlight!
   [line-map-atom editors output-format]
   (let [setup (fn [ed ix]
-                (.on ed "cursorActivity" (fn [_] (when (.hasFocus ed) (cross->highlight! @line-map-atom ix editors))))
-                (.on ed "focus" (fn [_] (cross->highlight! @line-map-atom ix editors))))]
+                (.on ed "cursorActivity" (fn [_] (when (.hasFocus ed) (cross->highlight! @line-map-atom ix editors output-format))))
+                (.on ed "focus" (fn [_] (cross->highlight! @line-map-atom ix editors output-format)))
+                (.on ed "changes" (fn [_] (cross->highlight! @line-map-atom ix editors output-format))))]
     (doseq [[ix e] (map-indexed vector (butlast editors))] (setup e ix))
     (setup (last editors) output-format)))

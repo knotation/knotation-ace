@@ -26,20 +26,22 @@
            (if (and (or in (zero? in)) (or out (zero? out)))
              (let [i [ed in] o [out-key out]]
                (update-in
-                (update-in m [ed in] #(conj (or % #{}) [out-key out]))
-                [out-key out] #(conj (or % #{}) [ed in])))
+                (update-in m [ed in] #(conj (if (empty? %) #{} %) [out-key out]))
+                [out-key out] #(conj (if (empty? %) #{} %) [ed in])))
              m))]
-     (:map
-      (reduce
-       (fn [memo elem]
-         (let [ed (if (= ::st/graph-end (::st/event elem)) (+ 1 (:ed memo)) (:ed memo))
-               in (::st/line-number (::st/input elem))
-               out (::st/line-number (::st/output elem))
-               m (:map memo)]
-           (when (and in out) (.log js/console " =>" (clj->js elem)))
-           {:ed ed :map (modified m ed in out elem)}))
-       {:ed 0 :map line-map}
-       compiled)))))
+     (util/tap!
+      "FINAL LINE MAP"
+      (:map
+       (reduce
+        (fn [memo elem]
+          (let [ed (if (= ::st/graph-end (::st/event elem)) (+ 1 (:ed memo)) (:ed memo))
+                in (::st/line-number (::st/input elem))
+                out (::st/line-number (::st/output elem))
+                m (:map memo)]
+            (when (and in out) (.log js/console " =>" (clj->js elem)))
+            {:ed ed :map (modified m ed in out elem)}))
+        {:ed 0 :map line-map}
+        compiled))))))
 
 (defn lookup
   [line-map editor-ix line-ix]
