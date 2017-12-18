@@ -56,7 +56,7 @@
                     (api/input :kn (.getValue input))
                     (api/output format)))
         result (compiled->content processed)
-        line-map (ln/compiled->line-map processed (conj env input))]
+        line-map (ln/compiled->line-map @line-map-atom processed (conj env input) format)]
     (doseq [[ed graph] (util/zip (conj env input) (ln/partition-graphs processed))]
       (set! (.-graph (.-knotation ed)) graph))
     (clear-line-errors! (conj env input))

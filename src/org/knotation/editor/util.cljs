@@ -4,6 +4,10 @@
 
 (defn dom-loaded [f] (.addEventListener js/document "DOMContentLoaded" f))
 
+(defn tap!
+  ([value] (.log js/console (clj->js value)) value)
+  ([prefix value] (.log js/console prefix " -- " (clj->js value)) value))
+
 (defn debounce [f interval]
   (let [dbnc (Debouncer. f interval)]
     ;; We use apply here to support functions of various arities

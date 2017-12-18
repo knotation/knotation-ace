@@ -19,14 +19,15 @@
      processed)))
 
 (defn compiled->line-map
-  ([compiled editors] (compiled->line-map empty compiled editors))
-  ([line-map compiled editors]
+  ([compiled editors out-key] (compiled->line-map empty compiled editors out-key))
+  ([line-map compiled editors out-key]
    (let [modified
-         (fn [m ed in out]
-           (if (and in out)
-             (update-in
-              (update-in m [ed (dec in)] #(conj (or % #{}) [:out out]))
-              [:out out] #(conj (or % #{}) [ed (dec in)]))
+         (fn [m ed in out elem]
+           (if (and (or in (zero? in)) (or out (zero? out)))
+             (let [i [ed in] o [out-key out]]
+               (update-in
+                (update-in m [ed in] #(conj (or % #{}) [out-key out]))
+                [out-key out] #(conj (or % #{}) [ed in])))
              m))]
      (:map
       (reduce
@@ -34,9 +35,9 @@
          (let [ed (if (= ::st/graph-end (::st/event elem)) (+ 1 (:ed memo)) (:ed memo))
                in (::st/line-number (::st/input elem))
                out (::st/line-number (::st/output elem))
-               lns (count (::st/lines (::st/input elem)))
                m (:map memo)]
-           {:ed ed :map (modified m ed in out)}))
+           (when (and in out) (.log js/console " =>" (clj->js elem)))
+           {:ed ed :map (modified m ed in out elem)}))
        {:ed 0 :map line-map}
        compiled)))))
 
