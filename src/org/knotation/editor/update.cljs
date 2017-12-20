@@ -57,6 +57,7 @@
                     (api/output format)))
         result (compiled->content processed)
         line-map (ln/compiled->line-map @line-map-atom processed (conj env input) format)]
+    (.log js/console "LINE MAP" (clj->js line-map))
     (doseq [[ed graph] (util/zip (conj env input) (ln/partition-graphs processed))]
       (set! (.-graph (.-knotation ed)) graph))
     (clear-line-errors! (conj env input))
