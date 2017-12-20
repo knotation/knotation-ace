@@ -132,7 +132,7 @@
              input
              ttl nq rdfa]
       :or {env [] prefix []}}]
-  (let [line-map (atom ln/empty)
+  (let [line-map (ln/line-map!)
         high! (fn [out format] (when out (high/cross<->highlight! line-map (conj env input out) format)))]
     (update/cross->>update! line-map :env env :input input :ttl ttl :nq nq :rdfa rdfa)
     (high! ttl :ttl) (high! nq :nq) (high! rdfa :rdfa)

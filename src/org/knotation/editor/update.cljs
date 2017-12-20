@@ -55,16 +55,14 @@
                     (vec (map #(api/env :kn (.getValue %)) env))
                     (api/input :kn (.getValue input))
                     (api/output format)))
-        result (compiled->content processed)
-        line-map (ln/compiled->line-map @line-map-atom processed (conj env input) format)]
-    (.log js/console "LINE MAP" (clj->js line-map))
+        result (compiled->content processed)]
+    (ln/update-line-map! line-map-atom processed (conj env input) format)
     (doseq [[ed graph] (util/zip (conj env input) (ln/partition-graphs processed))]
       (set! (.-graph (.-knotation ed)) graph))
     (clear-line-errors! (conj env input))
     (mark-line-errors! processed (conj env input))
     (.setValue output result)
     (.signal js/CodeMirror output "compiled-to" output result)
-    (reset! line-map-atom line-map)
     processed))
 
 (defn cross->update!
@@ -75,7 +73,7 @@
       (.on e "changes"
            (util/debounce
             (fn [cs]
-              (reset! line-map-atom ln/empty)
+              (ln/clear! line-map-atom)
               (let [ln (util/current-line e)
                     result (compile-content-to line-map-atom :env env :input input :output output :format format)]
                 (reset! compiled-atom result)))
