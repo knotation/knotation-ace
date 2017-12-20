@@ -56,7 +56,7 @@
                     (api/input :kn (.getValue input))
                     (api/output format)))
         result (compiled->content processed)]
-    (ln/update-line-map! line-map-atom processed (conj env input) format)
+    (ln/update-line-map! line-map-atom processed (conj env input) output)
     (doseq [[ed graph] (util/zip (conj env input) (ln/partition-graphs processed))]
       (set! (.-graph (.-knotation ed)) graph))
     (clear-line-errors! (conj env input))
@@ -69,7 +69,7 @@
   [line-map-atom & {:keys [env input   output format]}]
   (let [compiled-atom (atom nil)]
     (compile-content-to line-map-atom :env env :input input :output output :format format)
-    (doseq [[ix e] (map-indexed vector (conj env input))]
+    (doseq [e (conj env input)]
       (.on e "changes"
            (util/debounce
             (fn [cs]

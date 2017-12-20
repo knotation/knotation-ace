@@ -14,9 +14,7 @@
   nil)
 
 (defn ed->ix [ed] (.-ix (.-knotation ed)))
-(def edToIx ed->ix)
 (defn ix->ed [ix] (get @editors ix))
-(def ixToEd ix->ed)
 
 (defn line-map! [] (atom {}))
 (defn clear! [atm] (reset! atm {}))
@@ -37,10 +35,9 @@
    (let [modified
          (fn [m ed in out elem]
            (if (and (or in (zero? in)) (or out (zero? out)))
-             (let [i [ed in] o [out-key out]]
-               (update-in
-                (update-in m [ed in] #(conj (if (empty? %) #{} %) [out-key out]))
-                [out-key out] #(conj (if (empty? %) #{} %) [ed in])))
+             (update-in
+              (update-in m [ed in] #(conj (or % #{}) [out-key out]))
+              [out-key out] #(conj (or % #{}) [ed in]))
              m))]
      (reduce
       (fn [memo [ed lines]]
@@ -48,13 +45,13 @@
          (fn [m elem]
            (let [in (::st/line-number (::st/input elem))
                  out (::st/line-number (::st/output elem))]
-             (modified m (ed->ix ed) in out elem)))
+             (modified m ed in out elem)))
          memo lines))
       line-map (util/zip input-editors (partition-graphs compiled))))))
 
 (defn update-line-map!
   [atm compiled input-editors output-editor]
-  (reset! atm (compiled->line-map @atm compiled input-editors output-editor)))
+  (reset! atm (compiled->line-map @atm compiled (map ed->ix input-editors) (ed->ix output-editor))))
 
 (defn lookup
   [line-map editor-ix line-ix]
