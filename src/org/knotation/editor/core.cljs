@@ -103,6 +103,8 @@
                       (when-let [g (.-graph (.-knotation ed))]
                         (first (filter #(= (inc ln-num) (->> % ::st/input ::st/line-number)) g))))}))
 
+    (ln/assign-ix! ed)
+
     (set! (.-hooks ed) {:on-hover (atom []) :on-leave (atom [])})
     (set! (.-onmouseover (.getWrapperElement ed)) #(run-hooks! ed :on-hover %))
     (set! (.-onmouseout (.getWrapperElement ed)) #(run-hooks! ed :on-leave %))
