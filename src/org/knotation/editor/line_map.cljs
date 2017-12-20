@@ -54,5 +54,7 @@
   (reset! atm (compiled->line-map @atm compiled (map ed->ix input-editors) (ed->ix output-editor))))
 
 (defn lookup
-  [line-map editor-ix line-ix]
-  (get-in line-map [editor-ix line-ix] #{}))
+  [line-map editor line-ix]
+  (map
+   (fn [[ed-ix ln-ix]] [(ix->ed ed-ix) ln-ix])
+   (get-in line-map [(ed->ix editor) line-ix] #{})))

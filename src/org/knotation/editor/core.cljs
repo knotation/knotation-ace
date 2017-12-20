@@ -133,9 +133,9 @@
              ttl nq rdfa]
       :or {env [] prefix []}}]
   (let [line-map (ln/line-map!)
-        high! (fn [out format] (when out (high/cross<->highlight! line-map (conj env input out) format)))]
+        high! (fn [out] (when out (high/cross<->highlight! line-map (conj env input out))))]
     (update/cross->>update! line-map :env env :input input :ttl ttl :nq nq :rdfa rdfa)
-    (high! ttl :ttl) (high! nq :nq) (high! rdfa :rdfa)
+    (high! ttl) (high! nq) (high! rdfa)
     (doseq [e (conj env input)] (high/subject-highlight-on-move! e))))
 
 (defn linkedEditors
