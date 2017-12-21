@@ -78,5 +78,14 @@
 
 (defn cross->>update!
   [line-map-atom & {:keys [env input   ttl nq rdfa]}]
-  (let [update! (fn [ed format] (when ed (cross->update! line-map-atom :env env :input input :output ed :format format)))]
-    (update! ttl :ttl) (update! nq :nq) (update! rdfa :rdfa)))
+  (let [out! (fn []
+               (doseq [[out format] [[ttl :ttl] [nq :nq] [rdfa :rdfa]]]
+                 (when out (compile-content-to line-map-atom :env env :input input :output out :format format))))]
+    (out!)
+    (doseq [in (conj env input)]
+      (.on in "changes"
+           (util/debounce
+            (fn [cs]
+              (ln/clear! line-map-atom)
+              (out!))
+            500)))))
