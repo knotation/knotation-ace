@@ -41,11 +41,14 @@
             ln-to (second entry)]
         (highlight-line! ed-from ln-from)
         (highlight-line! ed-to ln-to)
-        (util/scroll-into-view! ed-to :line ln-to)))))
+        (util/scroll-into-view! ed-to :line ln-to :margin 100)))))
 
 (defn cross<->highlight!
   [line-map-atom editors]
   (doseq [ed editors]
-    (.on ed "cursorActivity" (fn [_] (when (.hasFocus ed) (cross->highlight! @line-map-atom ed editors))))
-    (.on ed "focus" (fn [_] (cross->highlight! @line-map-atom ed editors)))
-    (.on ed "changes" (fn [_] (cross->highlight! @line-map-atom ed editors)))))
+    (let [when-focused (fn [_] (when (.hasFocus ed) (cross->highlight! @line-map-atom ed editors)))
+          always (fn [_] (cross->highlight! @line-map-atom ed editors))]
+      (.on ed "cursorActivity" when-focused)
+      (.on ed "focus" always)
+      (.on ed "changes" always)
+      (.on ed "compiled-from" when-focused))))

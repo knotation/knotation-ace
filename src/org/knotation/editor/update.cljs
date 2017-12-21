@@ -50,18 +50,20 @@
 
 (defn compile-content-to
   [line-map-atom & {:keys [env input format output] :or {format :ttl}}]
-  (let [processed (api/run-operations
+  (let [inputs (conj env input)
+        processed (api/run-operations
                    (conj
                     (vec (map #(api/env :kn (.getValue %)) env))
                     (api/input :kn (.getValue input))
                     (api/output format)))
         result (compiled->content processed)]
-    (ln/update-line-map! line-map-atom processed (conj env input) output)
-    (doseq [[ed graph] (util/zip (conj env input) (ln/partition-graphs processed))]
-      (set! (.-graph (.-knotation ed)) graph))
+    (ln/update-line-map! line-map-atom processed inputs output)
     (clear-line-errors! (conj env input))
     (mark-line-errors! processed (conj env input))
     (.setValue output result)
+    (doseq [[ed graph] (util/zip inputs (ln/partition-graphs processed))]
+      (set! (.-graph (.-knotation ed)) graph)
+      (.signal js/CodeMirror ed "compiled-from" output result))
     (.signal js/CodeMirror output "compiled-to" output result)
     processed))
 
