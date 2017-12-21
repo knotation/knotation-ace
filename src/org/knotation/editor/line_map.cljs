@@ -32,22 +32,19 @@
 
 (defn compiled->line-map
   ([line-map compiled input-editors out-key]
-   (let [modified
-         (fn [m ed in out elem]
-           (if (and (or in (zero? in)) (or out (zero? out)))
-             (update-in
-              (update-in m [ed in] #(conj (or % #{}) [out-key out]))
-              [out-key out] #(conj (or % #{}) [ed in]))
-             m))]
-     (reduce
-      (fn [memo [ed lines]]
-        (reduce
-         (fn [m elem]
-           (let [in (::st/line-number (::st/input elem))
-                 out (::st/line-number (::st/output elem))]
-             (modified m ed in out elem)))
-         memo lines))
-      line-map (util/zip input-editors (partition-graphs compiled))))))
+   (reduce
+    (fn [memo [ed lines]]
+      (reduce
+       (fn [m elem]
+         (let [in (::st/line-number (::st/input elem))
+               out (::st/line-number (::st/output elem))]
+           (or (and (or in (zero? in)) (or out (zero? out))
+                    (update-in
+                     (update-in m [ed in] #(conj (or % #{}) [out-key out]))
+                     [out-key out] #(conj (or % #{}) [ed in])))
+               m)))
+       memo lines))
+    line-map (util/zip input-editors (partition-graphs compiled)))))
 
 (defn update-line-map!
   [atm compiled input-editors output-editor]
