@@ -48,43 +48,36 @@
 
         nil))))
 
-(defn compile-content-to
-  [line-map-atom & {:keys [env input format output] :or {format :ttl}}]
-  (let [inputs (conj env input)
-        processed (api/run-operations
-                   (conj
-                    (vec (map #(api/env :kn (.getValue %)) env))
-                    (api/input :kn (.getValue input))
-                    (api/output format)))
+(defn compile-content-to!
+  [line-map-atom intermediate inputs output format]
+  (let [processed (api/run-operations (conj intermediate (api/output format)))
         result (compiled->content processed)]
     (ln/update-line-map! line-map-atom processed inputs output)
-    (clear-line-errors! (conj env input))
-    (mark-line-errors! processed (conj env input))
+    (mark-line-errors! processed inputs)
     (.setValue output result)
+    ;; FIXME - this kind of works right now, but it does a lot more work than it needs to
+    ;;         for multiple output editors (assigns each output graph, clobbering them successively
+    ;;         until the last one is finally left for consumption). We should figure out a principled
+    ;;         way of deciding which (if any) graph to expose.
     (doseq [[ed graph] (util/zip inputs (ln/partition-graphs processed))]
-      (set! (.-graph (.-knotation ed)) graph)
-      (.signal js/CodeMirror ed "compiled-from" output result))
+      (set! (.-graph (.-knotation ed)) graph))
     (.signal js/CodeMirror output "compiled-to" output result)
     processed))
 
-(defn cross->update!
-  [line-map-atom & {:keys [env input   output format]}]
-  (compile-content-to line-map-atom :env env :input input :output output :format format)
-  (doseq [e (conj env input)]
-    (.on e "changes"
-         (util/debounce
-          (fn [cs]
-            (ln/clear! line-map-atom)
-            (compile-content-to line-map-atom :env env :input input :output output :format format))
-          500))))
-
 (defn cross->>update!
   [line-map-atom & {:keys [env input   ttl nq rdfa]}]
-  (let [out! (fn []
-               (doseq [[out format] [[ttl :ttl] [nq :nq] [rdfa :rdfa]]]
-                 (when out (compile-content-to line-map-atom :env env :input input :output out :format format))))]
+  (let [inputs (conj env input)
+        out! (fn []
+               (let [intermediate
+                     (conj
+                      (vec (map #(api/env :kn (.getValue %)) env))
+                      (api/input :kn (.getValue input)))]
+                 (clear-line-errors! inputs)
+                 (doseq [[out format] [[ttl :ttl] [nq :nq] [rdfa :rdfa]]]
+                   (when out (compile-content-to! line-map-atom intermediate inputs out format)))
+                 (doseq [ed inputs] (.signal js/CodeMirror ed "compiled-from"))))]
     (out!)
-    (doseq [in (conj env input)]
+    (doseq [in inputs]
       (.on in "changes"
            (util/debounce
             (fn [cs]
