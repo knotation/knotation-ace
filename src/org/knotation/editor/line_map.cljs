@@ -5,30 +5,53 @@
 
             [org.knotation.editor.util :as util]))
 
+(def editors (atom []))
+
+(defn assign-ix! [ed]
+  (when  (not (number? (.-ix (.-knotation ed))))
+    (set! (.-ix (.-knotation ed)) (count @editors))
+    (swap! editors conj ed))
+  nil)
+
+(defn ed->ix [ed] (.-ix (.-knotation ed)))
+(defn ix->ed [ix] (get @editors ix))
+
+(defn line-map! [] (atom {}))
+(defn clear! [atm] (reset! atm {}))
+
+(defn partition-graphs
+  [processed]
+  (let [a (volatile! 0)]
+    (partition-by
+     (fn [elem]
+       (let [res @a]
+         (when (= ::st/graph-end (::st/event elem))
+           (vswap! a inc))
+         res))
+     processed)))
+
 (defn compiled->line-map
-  [compiled]
-  (let [modified
-        (fn [m ed in out]
-          (if (and in out)
-            (update-in
-             (update-in m [ed (dec in)] #(conj (or % #{}) [:out (dec out)]))
-             [:out (dec out)] #(conj (or % #{})  [ed (dec in)]))
-            m))]
-    (:map
-     (reduce
-      (fn [memo elem]
-        (let [ed (if (= ::st/graph-end (::st/event elem)) (+ 1 (:ed memo)) (:ed memo))
-              in (::st/line-number (::st/input elem))
-              out (::st/line-number (::st/output elem))
-              lns (count (::st/lines (::st/input elem)))
-              comp (:compensate memo)
-              m (:map memo)]
-          {:ed ed
-           :compensate (if (> lns 1) (+ (dec lns) comp) comp)
-           :map (reduce (fn [m delta] (modified m ed (+ delta in) (+ delta comp out))) m (range lns))}))
-      {:ed 0 :compensate 0 :map {}}
-      compiled))))
+  ([line-map compiled input-editors out-key]
+   (reduce
+    (fn [memo [ed lines]]
+      (reduce
+       (fn [m elem]
+         (let [in (::st/line-number (::st/input elem))
+               out (::st/line-number (::st/output elem))]
+           (or (and (or in (zero? in)) (or out (zero? out))
+                    (update-in
+                     (update-in m [ed in] #(conj (or % #{}) [out-key out]))
+                     [out-key out] #(conj (or % #{}) [ed in])))
+               m)))
+       memo lines))
+    line-map (util/zip input-editors (partition-graphs compiled)))))
+
+(defn update-line-map!
+  [atm compiled input-editors output-editor]
+  (reset! atm (compiled->line-map @atm compiled (map ed->ix input-editors) (ed->ix output-editor))))
 
 (defn lookup
-  [line-map editor-ix line-ix]
-  (get-in line-map [editor-ix line-ix] #{}))
+  [line-map editor line-ix]
+  (map
+   (fn [[ed-ix ln-ix]] [(ix->ed ed-ix) ln-ix])
+   (get-in line-map [(ed->ix editor) line-ix] #{})))

@@ -9,16 +9,6 @@
             [org.knotation.editor.line-map :as ln]
             [org.knotation.editor.highlight :as high]))
 
-     ;; (let [opts {::api/operation-type :render ::st/format :ttl}
-     ;;       processed (api/run-operations [(api/kn (.getValue editor-a)) opts])
-     ;;       result (string/join "\n" (filter identity (map (fn [e] (->> e ::st/output ::st/lines first)) processed)))
-     ;;       line-pairs (map (fn [e] [(->> e ::st/input ::st/line-number) (->> e ::st/output ::st/line-number)]) processed)]
-     ;;   (.setValue editor-b result)
-     ;;   (reset! line-map (into {} (map (fn [e][(->> e ::st/input ::st/line-number) (->> e ::st/output ::st/line-number)]) processed)))
-     ;;   ;; (.log js/console "NEW LINE-MAP" (clj->js ))
-     ;;   (doseq [p line-pairs]
-     ;;     (.log js/console "  " (clj->js p))))
-
 (defn compiled->content
   [compiled]
   (->> compiled
@@ -58,47 +48,46 @@
 
         nil))))
 
-(defn partition-graphs
-  [processed]
-  (let [a (volatile! 0)]
-    (partition-by
-     (fn [elem]
-       (let [res @a]
-         (when (= ::st/graph-end (::st/event elem))
-           (vswap! a inc))
-         res))
-     processed)))
-
 (defn compile-content-to
-  [line-map-atom editors]
-  (let [ct (count editors)
-        outp (last editors)
-        inp (last (butlast editors))
-        prefs (butlast (butlast editors))
+  [line-map-atom & {:keys [env input format output] :or {format :ttl}}]
+  (let [inputs (conj env input)
         processed (api/run-operations
                    (conj
-                    (conj
-                     (vec (map #(api/env :kn (.getValue %)) prefs))
-                     (api/input :kn (.getValue inp)))
-                    (api/output :ttl)))
-        result (compiled->content processed)
-        line-map (ln/compiled->line-map processed)]
-    (doseq [[ed graph] (map (fn [a b] [a b]) (butlast editors) (partition-graphs processed))]
-      (set! (.-graph (.-knotation ed)) graph))
-    (clear-line-errors! editors)
-    (mark-line-errors! processed editors)
-    (.setValue outp result)
-    (reset! line-map-atom line-map)
+                    (vec (map #(api/env :kn (.getValue %)) env))
+                    (api/input :kn (.getValue input))
+                    (api/output format)))
+        result (compiled->content processed)]
+    (ln/update-line-map! line-map-atom processed inputs output)
+    (clear-line-errors! (conj env input))
+    (mark-line-errors! processed (conj env input))
+    (.setValue output result)
+    (doseq [[ed graph] (util/zip inputs (ln/partition-graphs processed))]
+      (set! (.-graph (.-knotation ed)) graph)
+      (.signal js/CodeMirror ed "compiled-from" output result))
+    (.signal js/CodeMirror output "compiled-to" output result)
     processed))
 
 (defn cross->update!
-  [line-map-atom compiled-atom editors]
-  (doseq [[ix e] (map-indexed vector (butlast editors))]
+  [line-map-atom & {:keys [env input   output format]}]
+  (compile-content-to line-map-atom :env env :input input :output output :format format)
+  (doseq [e (conj env input)]
     (.on e "changes"
          (util/debounce
           (fn [cs]
-            (let [ln (util/current-line e)
-                  result (compile-content-to line-map-atom editors)]
-              (reset! compiled-atom result)
-              (high/cross->highlight! @line-map-atom ix editors)))
+            (ln/clear! line-map-atom)
+            (compile-content-to line-map-atom :env env :input input :output output :format format))
           500))))
+
+(defn cross->>update!
+  [line-map-atom & {:keys [env input   ttl nq rdfa]}]
+  (let [out! (fn []
+               (doseq [[out format] [[ttl :ttl] [nq :nq] [rdfa :rdfa]]]
+                 (when out (compile-content-to line-map-atom :env env :input input :output out :format format))))]
+    (out!)
+    (doseq [in (conj env input)]
+      (.on in "changes"
+           (util/debounce
+            (fn [cs]
+              (ln/clear! line-map-atom)
+              (out!))
+            500)))))
