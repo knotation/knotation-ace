@@ -1,5 +1,6 @@
 (ns org.knotation.editor.core
   (:require [cljsjs.codemirror]
+            [cljsjs.bootstrap-treeview]
 
             [org.knotation.editor.modes.sparql]
             [org.knotation.editor.modes.turtle]
@@ -127,14 +128,22 @@
                     (dissoc (js->clj options :keywordize-keys true) :focus))]
     (apply editor! editor-selector (mapcat identity opts))))
 
+(defn treeFromSelector
+  [tree-selector options]
+  (.treeview (js/$ tree-selector) options))
+
+(defn tree!
+  [tree-selector & {:keys [data] :or {data []}}]
+  (util/set-tree tree-selector data))
+
 (defn linked-editors
   [& {:keys [env prefix
              input
-             ttl nq rdfa]
+             ttl nq rdfa tree]
       :or {env [] prefix []}}]
   (let [line-map (ln/line-map!)
         high! (fn [out] (when out (high/cross<->highlight! line-map (conj env input out))))]
-    (update/cross->>update! line-map :env env :input input :ttl ttl :nq nq :rdfa rdfa)
+    (update/cross->>update! line-map :env env :input input :ttl ttl :nq nq :rdfa rdfa :tree tree)
     (high! ttl) (high! nq) (high! rdfa)
     (doseq [e (conj env input)] (high/subject-highlight-on-move! e))))
 
@@ -143,5 +152,6 @@
   (let [opts (js->clj options :keywordize-keys true)]
     ;; the more obvious (apply linked-ediors (select-keys opts [...])) doesn't work here for some reason.
     ;; It's a bug in either the CLJS implementation of apply or select-keys
-    (linked-editors :env (:env opts) :prefix (:prefix opts) :input (:input opts)
-                    :ttl (:ttl opts) :nq (:nq opts) :rdfa (:rdfa opts))))
+    (linked-editors
+     :env (:env opts) :prefix (:prefix opts) :input (:input opts)
+     :ttl (:ttl opts) :nq (:nq opts) :rdfa (:rdfa opts) :tree (:tree opts))))

@@ -65,7 +65,7 @@
     processed))
 
 (defn cross->>update!
-  [line-map-atom & {:keys [env input   ttl nq rdfa]}]
+  [line-map-atom & {:keys [env input   ttl nq rdfa tree]}]
   (let [inputs (conj env input)
         out! (fn []
                (let [intermediate
@@ -73,6 +73,16 @@
                       (vec (map #(api/env :kn (.getValue %)) env))
                       (api/input :kn (.getValue input)))]
                  (clear-line-errors! inputs)
+
+                 (util/set-tree
+                  tree
+                  (->> (conj intermediate (api/output :tree.json))
+                       api/run-operations
+                       last
+                       ::st/output
+                       ::st/lines
+                       first))
+
                  (doseq [[out format] [[ttl :ttl] [nq :nq] [rdfa :rdfa]]]
                    (when out (compile-content-to! line-map-atom intermediate inputs out format)))
                  (doseq [ed inputs] (.signal js/CodeMirror ed "compiled-from"))))]

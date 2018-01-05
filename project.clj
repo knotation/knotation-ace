@@ -9,6 +9,7 @@
                  [org.clojure/clojurescript "1.9.521"]
 
                  [cljsjs/codemirror "5.24.0-1"]
+                 [cljsjs/bootstrap-treeview "1.2.0-1"]
 
                  [crate "0.2.4"]
 
