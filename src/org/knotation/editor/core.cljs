@@ -8,6 +8,8 @@
             [org.knotation.editor.modes.javascript]
             [org.knotation.editor.modes.knotation]
 
+            [org.knotation.editor.extras.vizlite]
+
             [org.knotation.editor.styles :as styles]
             [org.knotation.editor.util :as util]
             [org.knotation.editor.line-map :as ln]

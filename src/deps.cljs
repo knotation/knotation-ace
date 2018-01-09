@@ -2,6 +2,9 @@
  [{:file "org/knotation/n3.js"
    :file-min "org/knotation/n3.min.js"
    :provides [org.knotation.n3]}
+  {:file "org/knotation/editor/extras/vizlite.js"
+   :file-min "org/knotation/editor/extras/vizlite.min.js"
+   :provides [org.knotation.editor.extras.vizlite]}
   {:file "org/knotation/editor/modes/ntriples.js"
    :file-min "org/knotation/editor/modes/ntriples.min.js"
    :provides [org.knotation.editor.modes.ntriples]}
