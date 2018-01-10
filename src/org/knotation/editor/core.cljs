@@ -100,11 +100,13 @@
 (defn linked-editors
   [& {:keys [env prefix
              input
-             ttl nq rdfa tree]
+             ttl nq rdfa tree viz]
       :or {env [] prefix []}}]
   (let [line-map (ln/line-map!)
         high! (fn [out] (when out (high/cross<->highlight! line-map (conj env input out))))]
-    (update/cross->>update! line-map :env env :input input :ttl ttl :nq nq :rdfa rdfa :tree tree)
+    (update/cross->>update!
+     line-map :env env :input input :ttl ttl :nq nq :rdfa rdfa
+     :tree tree :viz viz)
     (high! ttl) (high! nq) (high! rdfa)
     (doseq [e (conj env input)] (high/subject-highlight-on-move! e))))
 
@@ -115,4 +117,5 @@
     ;; It's a bug in either the CLJS implementation of apply or select-keys
     (linked-editors
      :env (:env opts) :prefix (:prefix opts) :input (:input opts)
-     :ttl (:ttl opts) :nq (:nq opts) :rdfa (:rdfa opts) :tree (:tree opts))))
+     :ttl (:ttl opts) :nq (:nq opts) :rdfa (:rdfa opts)
+     :tree (:tree opts) :viz (:viz opts))))
