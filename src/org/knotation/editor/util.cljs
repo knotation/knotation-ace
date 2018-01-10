@@ -37,3 +37,11 @@
 
 (defn zip [& lists]
   (apply map (fn [& args] (vec args)) lists))
+
+(defn set-tree!
+  [selector data]
+  (.treeview (js/$ selector) (clj->js {:data data})))
+
+(defn set-viz!
+  [selector data]
+  (.html (js/$ selector) (js/Viz data)))

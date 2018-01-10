@@ -2,6 +2,9 @@
  [{:file "org/knotation/n3.js"
    :file-min "org/knotation/n3.min.js"
    :provides [org.knotation.n3]}
+  {:file "org/knotation/editor/extras/vizlite.js"
+   :file-min "org/knotation/editor/extras/vizlite.min.js"
+   :provides [org.knotation.editor.extras.vizlite]}
   {:file "org/knotation/editor/modes/ntriples.js"
    :file-min "org/knotation/editor/modes/ntriples.min.js"
    :provides [org.knotation.editor.modes.ntriples]}
@@ -10,4 +13,7 @@
    :provides [org.knotation.editor.modes.sparql]}
   {:file "org/knotation/editor/modes/turtle.js"
    :file-min "org/knotation/editor/modes/turtle.min.js"
-   :provides [org.knotation.editor.modes.turtle]}]}
+   :provides [org.knotation.editor.modes.turtle]}
+  {:file "org/knotation/editor/modes/javascript.js"
+   :file-min "org/knotation/editor/modes/javascript.min.js"
+   :provides [org.knotation.editor.modes.javascript]}]}
