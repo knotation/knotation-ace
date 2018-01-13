@@ -65,12 +65,12 @@
     processed))
 
 (defn cross->>update!
-  [line-map-atom & {:keys [env input   ttl nq rdfa]}]
+  [line-map-atom & {:keys [env prefix input   ttl nq rdfa]}]
   (let [inputs (conj env input)
         out! (fn []
                (let [intermediate
                      (conj
-                      (vec (map #(api/env :kn (.getValue %)) env))
+                      (vec (map #(api/env :kn (.getValue %)) (concat env prefix)))
                       (api/input :kn (.getValue input)))]
                  (clear-line-errors! inputs)
                  (doseq [[out format] [[ttl :ttl] [nq :nq] [rdfa :rdfa]]]

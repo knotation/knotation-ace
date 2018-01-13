@@ -18,40 +18,6 @@
 
             [clojure.string :as string]))
 
-(defn _parseTTL
-  [string]
-  ;; (let [parser (.Parser js/N3)
-  ;;       res (atom [])]
-  ;;   (.parse parser string
-  ;;           (fn [err trip prefs]
-  ;;             (.log js/console "TRIP" err trip prefs)
-  ;;             (swap! res conj [err trip prefs])))
-  ;;   (clj->js @res))
-  (let [lines (string/split-lines string)
-        prefixes (->> lines
-                      (filter #(re-find #"^@prefix" %))
-                      (map #(re-find #"^@prefix (.*): <?([^>]+)>?" %))
-                      (map (fn [[_ k v]] [k v]))
-                      (into {}))]
-    {:prefixes prefixes :quads (js->clj (.parse (.Parser js/N3) string))}))
-
-(defn _writeTTL
-  ([trips callback] (_writeTTL (clj->js {}) trips callback))
-  ([prefixes trips callback]
-   (.log js/console "_writeTTL CALLED" prefixes trips callback)
-   (let [writer (.Writer js/N3 (clj->js {:prefixes (js->clj prefixes)}))]
-     (doseq [t trips] (.addTriple writer t))
-     (.end writer callback))))
-
-(defn _compiledFromTTL
-  [string]
-  (let [parsed (_parseTTL string)]
-    (.log js/console "PARSED" (clj->js parsed))
-    (_writeTTL (clj->js (:prefixes parsed)) (clj->js (:quads parsed))
-               (fn [err res]
-                 (.log js/console "CALLBACK CALLED err:" err " res:" (clj->js (api/input :nq res)))
-                 (.log js/console "END RESULT" (clj->js (api/run-operations [(api/input :nq res)])))))))
-
 (defn addCommands
   [ed commands]
   (.setOption ed "extraKeys" commands))
@@ -127,21 +93,22 @@
                     (dissoc (js->clj options :keywordize-keys true) :focus))]
     (apply editor! editor-selector (mapcat identity opts))))
 
-(defn linked-editors
+(defn linked
   [& {:keys [env prefix
              input
              ttl nq rdfa]
       :or {env [] prefix []}}]
   (let [line-map (ln/line-map!)
         high! (fn [out] (when out (high/cross<->highlight! line-map (conj env input out))))]
-    (update/cross->>update! line-map :env env :input input :ttl ttl :nq nq :rdfa rdfa)
+    (update/cross->>update! line-map :env env :prefix prefix :input input :ttl ttl :nq nq :rdfa rdfa)
     (high! ttl) (high! nq) (high! rdfa)
     (doseq [e (conj env input)] (high/subject-highlight-on-move! e))))
 
+(defn linked-editors
+  [env input ttl nq rdfa]
+  (linked :env [env] :input input :ttl ttl :nq nq :rdfa rdfa))
+
 (defn linkedEditors
   [options]
-  (let [opts (js->clj options :keywordize-keys true)]
-    ;; the more obvious (apply linked-ediors (select-keys opts [...])) doesn't work here for some reason.
-    ;; It's a bug in either the CLJS implementation of apply or select-keys
-    (linked-editors :env (:env opts) :prefix (:prefix opts) :input (:input opts)
-                    :ttl (:ttl opts) :nq (:nq opts) :rdfa (:rdfa opts))))
+  (let [[env input ttl nq rdfa] (js->clj options :keywordize-keys true)]
+    (linked-editors env input ttl nq rdfa)))
