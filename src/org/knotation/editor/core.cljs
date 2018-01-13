@@ -5,6 +5,7 @@
             [org.knotation.editor.modes.turtle]
             [org.knotation.editor.modes.ntriples]
             [org.knotation.editor.modes.knotation]
+            [org.knotation.editor.modes.javascript]
 
             [org.knotation.editor.styles :as styles]
             [org.knotation.editor.util :as util]

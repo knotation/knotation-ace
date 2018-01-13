@@ -10,4 +10,7 @@
    :provides [org.knotation.editor.modes.sparql]}
   {:file "org/knotation/editor/modes/turtle.js"
    :file-min "org/knotation/editor/modes/turtle.min.js"
-   :provides [org.knotation.editor.modes.turtle]}]}
+   :provides [org.knotation.editor.modes.turtle]}
+  {:file "org/knotation/editor/modes/javascript.js"
+   :file-min "org/knotation/editor/modes/javascript.min.js"
+   :provides [org.knotation.editor.modes.javascript]}]}
