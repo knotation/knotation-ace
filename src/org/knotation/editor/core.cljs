@@ -109,6 +109,5 @@
   (linked :env [env] :input input :ttl ttl :nq nq :rdfa rdfa))
 
 (defn linkedEditors
-  [options]
-  (let [[env input ttl nq rdfa] (js->clj options :keywordize-keys true)]
-    (linked-editors env input ttl nq rdfa)))
+  [env input ttl nq rdfa]
+  (linked-editors env input ttl nq rdfa))
