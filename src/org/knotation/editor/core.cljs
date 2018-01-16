@@ -60,12 +60,15 @@
                        :mode mode :autofocus focus?
                        :theme (str theme " " mode)
 
-                       :extraKeys {"Ctrl-Space" "autocomplete"}
-                       :hintOptions {:hint (fn [ed opt]
-                                             (.log js/console "SHOWING HINT HERE" ed opt)
-                                             (clj->js {:list ["one" "two" "three" "four"]}))}
-
-                       })
+                       :hintOptions
+                       {:completeSingle false
+                        :hint (fn [ed opt]
+                                (let [completions ["one" "two" "three" "four"]
+                                      line (util/current-line ed)
+                                      token (js->clj (.getTokenAt ed (.getCursor ed)))]
+                                  (clj->js {:list (filter #(string/starts-with? % (get token "string")) completions)
+                                            :from {:line line :ch (get token "start")}
+                                            :to {:line line :ch (get token "end")}})))}})
         ed (if (= "TEXTAREA" (.-nodeName elem))
              (.fromTextArea js/CodeMirror elem opts)
              (js/CodeMirror elem opts))]
@@ -84,6 +87,13 @@
     (set! (.-hooks ed) {:on-hover (atom []) :on-leave (atom [])})
     (set! (.-onmouseover (.getWrapperElement ed)) #(run-hooks! ed :on-hover %))
     (set! (.-onmouseout (.getWrapperElement ed)) #(run-hooks! ed :on-leave %))
+
+    (.on
+     ed "change"
+     (fn [ed change]
+       (let [chg (js->clj change)]
+         (when (contains? #{"+input" "+delete"} (get chg "origin"))
+           (.execCommand ed "autocomplete")))))
 
     (on-hover!
      ed (fn [token]
