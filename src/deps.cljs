@@ -1,8 +1,5 @@
 {:foreign-libs
- [{:file "org/knotation/n3.js"
-   :file-min "org/knotation/n3.min.js"
-   :provides [org.knotation.n3]}
-  {:file "org/knotation/editor/modes/ntriples.js"
+ [{:file "org/knotation/editor/modes/ntriples.js"
    :file-min "org/knotation/editor/modes/ntriples.min.js"
    :provides [org.knotation.editor.modes.ntriples]}
   {:file "org/knotation/editor/modes/sparql.js"
@@ -13,4 +10,8 @@
    :provides [org.knotation.editor.modes.turtle]}
   {:file "org/knotation/editor/modes/javascript.js"
    :file-min "org/knotation/editor/modes/javascript.min.js"
-   :provides [org.knotation.editor.modes.javascript]}]}
+   :provides [org.knotation.editor.modes.javascript]}
+
+  {:file "org/knotation/editor/addons/hint.js"
+   :file-min "org/knotation/editor/addons/hint.min.js"
+   :provides [org.knotation.editor.addons.hint]}]}
