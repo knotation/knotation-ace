@@ -16,6 +16,7 @@
             [org.knotation.editor.update :as update]
 
             [org.knotation.api :as api]
+            [org.knotation.rdf :as rdf]
             [org.knotation.state :as st]
 
             [clojure.string :as string]))
@@ -52,8 +53,11 @@
 (def onLeave on-leave!)
 
 (defn editor!
-  [editor-selector & {:keys [mode theme focus?]
-                      :or {mode "sparql" theme "default" focus? true}}]
+  [editor-selector & {:keys [mode theme focus? completions]
+                      :or {mode "sparql"
+                           theme "default"
+                           focus? true
+                           completions []}}]
   (styles/apply-style!)
   (let [elem (.querySelector js/document editor-selector)
         opts (clj->js {:lineNumbers true :gutters ["CodeMirror-linenumbers" "line-errors"]
@@ -63,12 +67,15 @@
                        :hintOptions
                        {:completeSingle false
                         :hint (fn [ed opt]
-                                (let [completions ["one" "two" "three" "four"]
-                                      line (util/current-line ed)
+                                (let [completions (.-completions (.-knotation ed))
                                       token (js->clj (.getTokenAt ed (.getCursor ed)))]
-                                  (clj->js {:list (filter #(string/starts-with? % (get token "string")) completions)
-                                            :from {:line line :ch (get token "start")}
-                                            :to {:line line :ch (get token "end")}})))}})
+                                  ;; (.log js/console "TOKEN" (.getTokenAt ed (.getCursor ed)) (clj->js completions))
+                                  (when (> (count (get token "string")) 1)
+                                    (let [line (util/current-line ed)]
+                                      (when (not (empty? completions))
+                                        (clj->js {:list (filter #(string/starts-with? % (get token "string")) completions)
+                                                  :from {:line line :ch (get token "start")}
+                                                  :to {:line line :ch (get token "end")}}))))))}})
         ed (if (= "TEXTAREA" (.-nodeName elem))
              (.fromTextArea js/CodeMirror elem opts)
              (js/CodeMirror elem opts))]
@@ -80,7 +87,9 @@
                     :getCompiledLine
                     (fn [ln-num]
                       (when-let [g (.-graph (.-knotation ed))]
-                        (first (filter #(= (inc ln-num) (->> % ::st/input ::st/line-number)) g))))}))
+                        (first (filter #(= (inc ln-num) (->> % ::st/input ::st/line-number)) g))))
+
+                    :completions completions}))
 
     (ln/assign-ix! ed)
 
@@ -91,9 +100,10 @@
     (.on
      ed "change"
      (fn [ed change]
-       (let [chg (js->clj change)]
-         (when (contains? #{"+input" "+delete"} (get chg "origin"))
-           (.execCommand ed "autocomplete")))))
+       (when (not (empty? (.-completions (.-knotation ed))))
+         (let [chg (js->clj change)]
+           (when (contains? #{"+input" "+delete"} (get chg "origin"))
+             (.execCommand ed "autocomplete"))))))
 
     (on-hover!
      ed (fn [token]
@@ -107,10 +117,13 @@
 
 (defn fromSelector
   [editor-selector options]
-  (let [opts (merge {:mode "sparql" :theme "default"
-                     :on-hover (.-onHover options)
-                     :focus? (not (not (.-focus options)))}
-                    (dissoc (js->clj options :keywordize-keys true) :focus))]
+  (let [opts (update
+              (merge {:mode "sparql" :theme "default"
+                      :on-hover (.-onHover options)
+                      :completions []
+                      :focus? (not (not (.-focus options)))}
+                     (dissoc (js->clj options :keywordize-keys true) :focus))
+              :completions #(js->clj %))]
     (apply editor! editor-selector (mapcat identity opts))))
 
 (defn linked-editors
