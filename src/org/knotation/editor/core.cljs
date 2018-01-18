@@ -14,6 +14,7 @@
             [org.knotation.editor.line-map :as ln]
             [org.knotation.editor.highlight :as high]
             [org.knotation.editor.update :as update]
+            [org.knotation.editor.complete :as complete]
 
             [org.knotation.api :as api]
             [org.knotation.rdf :as rdf]
@@ -65,17 +66,7 @@
                        :theme (str theme " " mode)
 
                        :hintOptions
-                       {:completeSingle false
-                        :hint (fn [ed opt]
-                                (let [completions (.-completions (.-knotation ed))
-                                      token (js->clj (.getTokenAt ed (.getCursor ed)))]
-                                  ;; (.log js/console "TOKEN" (.getTokenAt ed (.getCursor ed)) (clj->js completions))
-                                  (when (> (count (get token "string")) 1)
-                                    (let [line (util/current-line ed)]
-                                      (when (not (empty? completions))
-                                        (clj->js {:list (filter #(string/starts-with? % (get token "string")) completions)
-                                                  :from {:line line :ch (get token "start")}
-                                                  :to {:line line :ch (get token "end")}}))))))}})
+                       {:completeSingle false :hint complete/hint}})
         ed (if (= "TEXTAREA" (.-nodeName elem))
              (.fromTextArea js/CodeMirror elem opts)
              (js/CodeMirror elem opts))]
@@ -87,9 +78,9 @@
                     :getCompiledLine
                     (fn [ln-num]
                       (when-let [g (.-graph (.-knotation ed))]
-                        (first (filter #(= (inc ln-num) (->> % ::st/input ::st/line-number)) g))))
+                        (first (filter #(= (inc ln-num) (->> % ::st/input ::st/line-number)) g))))}))
 
-                    :completions completions}))
+    (complete/add-completions! ed completions)
 
     (ln/assign-ix! ed)
 
@@ -97,13 +88,7 @@
     (set! (.-onmouseover (.getWrapperElement ed)) #(run-hooks! ed :on-hover %))
     (set! (.-onmouseout (.getWrapperElement ed)) #(run-hooks! ed :on-leave %))
 
-    (.on
-     ed "change"
-     (fn [ed change]
-       (when (not (empty? (.-completions (.-knotation ed))))
-         (let [chg (js->clj change)]
-           (when (contains? #{"+input" "+delete"} (get chg "origin"))
-             (.execCommand ed "autocomplete"))))))
+    (.on ed "change" complete/autocomplete)
 
     (on-hover!
      ed (fn [token]
