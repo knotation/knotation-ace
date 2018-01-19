@@ -22,6 +22,11 @@
   (.-name (.getMode ed)))
 (def modeOf mode-of)
 
+(defn format-of
+  [ed]
+  (.-format (.-knotation ed)))
+(def formatOf format-of)
+
 (defn knotation-mode?
   [ed]
   (= "knotation" (mode-of ed)))

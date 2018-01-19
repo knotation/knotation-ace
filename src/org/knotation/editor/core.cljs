@@ -46,8 +46,14 @@
 (defn on-hover! [ed f] (add-hook! ed :on-hover f))
 (def onHover on-hover!)
 
-(defn on-leave! [ed f] (add-hook! ed :on-hover f))
+(defn on-leave! [ed f] (add-hook! ed :on-leave f))
 (def onLeave on-leave!)
+
+(def -format-map
+  {"ttl" "turtle"
+   "nq" "ntriples"
+   "rdfa" "sparql"
+   "kn" "knotation"})
 
 (defn editor!
   [editor-selector & {:keys [mode theme focus?]
@@ -55,14 +61,16 @@
   (styles/apply-style!)
   (let [elem (.querySelector js/document editor-selector)
         opts (clj->js {:lineNumbers true :gutters ["CodeMirror-linenumbers" "line-errors"]
-                       :mode mode :autofocus focus?
+                       :mode (or (get -format-map mode) mode) :autofocus focus?
                        :theme (str theme " " mode)})
         ed (if (= "TEXTAREA" (.-nodeName elem))
              (.fromTextArea js/CodeMirror elem opts)
              (js/CodeMirror elem opts))]
 
     (set! (.-knotation ed)
-          (clj->js {:getCompiled
+          (clj->js {:format mode
+
+                    :getCompiled
                     (fn [] (or (.-graph (.-knotation ed)) []))
 
                     :getCompiledLine
@@ -95,20 +103,15 @@
     (apply editor! editor-selector (mapcat identity opts))))
 
 (defn linked
-  [& {:keys [env prefix
-             input
-             ttl nq rdfa]
+  [& {:keys [env prefix input outputs]
       :or {env [] prefix []}}]
-  (let [line-map (ln/line-map!)
-        high! (fn [out] (when out (high/cross<->highlight! line-map (conj env input out))))]
-    (update/cross->>update! line-map :env env :prefix prefix :input input :ttl ttl :nq nq :rdfa rdfa)
-    (high! ttl) (high! nq) (high! rdfa)
+  (let [line-map (ln/line-map!)]
+    (update/cross->>update! line-map :env env :prefix prefix :input input :outputs outputs)
+    (doseq [out outputs] (high/cross<->highlight! line-map (conj env input out)))
     (doseq [e (conj env input)] (high/subject-highlight-on-move! e))))
 
-(defn linked-editors
-  [env input ttl nq rdfa]
-  (linked :env [env] :input input :ttl ttl :nq nq :rdfa rdfa))
-
-(defn linkedEditors
-  [env input ttl nq rdfa]
-  (linked-editors env input ttl nq rdfa))
+(defn link!
+  [env input & outputs]
+  (.log js/console "OUT MAP" (clj->js (group-by util/format-of outputs)) (clj->js (group-by util/mode-of outputs)))
+  (linked :env [env] :input input :outputs outputs))
+(def link link!)
