@@ -17,7 +17,8 @@
             [org.knotation.api :as api]
             [org.knotation.state :as st]
 
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [clojure.set :as set]))
 
 (defn addCommands
   [ed commands]
@@ -68,7 +69,7 @@
              (js/CodeMirror elem opts))]
 
     (set! (.-knotation ed)
-          (clj->js {:format mode
+          (clj->js {:format (or (get (set/map-invert -format-map) mode) mode)
 
                     :getCompiled
                     (fn [] (or (.-graph (.-knotation ed)) []))
