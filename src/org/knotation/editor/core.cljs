@@ -54,7 +54,8 @@
   {"ttl" "turtle"
    "nq" "ntriples"
    "rdfa" "sparql"
-   "kn" "knotation"})
+   "kn" "knotation"
+   "tree" "javascript"})
 
 (defn editor!
   [editor-selector & {:keys [mode theme focus?]
