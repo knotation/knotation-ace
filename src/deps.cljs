@@ -13,4 +13,7 @@
    :provides [org.knotation.editor.modes.turtle]}
   {:file "org/knotation/editor/modes/javascript.js"
    :file-min "org/knotation/editor/modes/javascript.min.js"
-   :provides [org.knotation.editor.modes.javascript]}]}
+   :provides [org.knotation.editor.modes.javascript]}
+  {:file "org/knotation/editor/modes/dot.js"
+   :file-min "org/knotation/editor/modes/dot.min.js"
+   :provides [org.knotation.editor.modes.dot]}]}
