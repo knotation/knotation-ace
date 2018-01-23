@@ -11,7 +11,9 @@
   {:file "org/knotation/editor/modes/javascript.js"
    :file-min "org/knotation/editor/modes/javascript.min.js"
    :provides [org.knotation.editor.modes.javascript]}
-
+  {:file "org/knotation/editor/modes/dot.js"
+   :file-min "org/knotation/editor/modes/dot.min.js"
+   :provides [org.knotation.editor.modes.dot]}
   {:file "org/knotation/editor/addons/hint.js"
    :file-min "org/knotation/editor/addons/hint.min.js"
    :provides [org.knotation.editor.addons.hint]}]}
