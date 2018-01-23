@@ -347,6 +347,44 @@ div.CodeMirror-dragcursors {
 /* Help users use markselection to safely style text background */
 span.CodeMirror-selectedtext { background: none; }")
 
+(def cm-hint-styles
+  ".CodeMirror-hints {
+  position: absolute;
+  z-index: 10;
+  overflow: hidden;
+  list-style: none;
+
+  margin: 0;
+  padding: 2px;
+
+  -webkit-box-shadow: 2px 3px 5px rgba(0,0,0,.2);
+  -moz-box-shadow: 2px 3px 5px rgba(0,0,0,.2);
+  box-shadow: 2px 3px 5px rgba(0,0,0,.2);
+  border-radius: 3px;
+  border: 1px solid silver;
+
+  background: white;
+  font-size: 90%;
+  font-family: monospace;
+
+  max-height: 20em;
+  overflow-y: auto;
+}
+
+.CodeMirror-hint {
+  margin: 0;
+  padding: 0 4px;
+  border-radius: 2px;
+  white-space: pre;
+  color: black;
+  cursor: pointer;
+}
+
+li.CodeMirror-hint-active {
+  background: #08f;
+  color: white;
+}")
+
 (def line-styles ".line-error { background-color: red; }
 .CodeMirror .line-error-message { border: 1px solid black; border-radius: 4px; margin-left: 5px; background-color: #f77171; }
 
@@ -355,7 +393,7 @@ span.CodeMirror-selectedtext { background: none; }")
 .line-errors { width: .8em; }")
 
 (def applied? (atom false))
-(def cm-styles (atom [cm-default line-styles]))
+(def cm-styles (atom [cm-default cm-hint-styles line-styles]))
 
 (defn add-style!
   [style]

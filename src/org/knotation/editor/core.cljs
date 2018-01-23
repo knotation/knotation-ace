@@ -8,14 +8,17 @@
             [org.knotation.editor.modes.javascript]
             [org.knotation.editor.modes.dot]
 
+            [org.knotation.editor.addons.hint]
+
             [org.knotation.editor.styles :as styles]
             [org.knotation.editor.util :as util]
             [org.knotation.editor.line-map :as ln]
             [org.knotation.editor.highlight :as high]
             [org.knotation.editor.update :as update]
+            [org.knotation.editor.complete :as complete]
 
-            [org.knotation.n3 :as n3]
             [org.knotation.api :as api]
+            [org.knotation.rdf :as rdf]
             [org.knotation.state :as st]
 
             [clojure.string :as string]
@@ -59,13 +62,19 @@
    "tree" "javascript"})
 
 (defn editor!
-  [editor-selector & {:keys [mode theme focus?]
-                      :or {mode "sparql" theme "default" focus? true}}]
+  [editor-selector & {:keys [mode theme focus? completions]
+                      :or {mode "sparql"
+                           theme "default"
+                           focus? true
+                           completions []}}]
   (styles/apply-style!)
   (let [elem (.querySelector js/document editor-selector)
         opts (clj->js {:lineNumbers true :gutters ["CodeMirror-linenumbers" "line-errors"]
                        :mode (or (get -format-map mode) mode) :autofocus focus?
-                       :theme (str theme " " mode)})
+                       :theme (str theme " " mode)
+                       :hintOptions
+                       {:completeSingle false :hint complete/hint}})
+
         ed (if (= "TEXTAREA" (.-nodeName elem))
              (.fromTextArea js/CodeMirror elem opts)
              (js/CodeMirror elem opts))]
@@ -81,11 +90,15 @@
                       (when-let [g (.-graph (.-knotation ed))]
                         (first (filter #(= (inc ln-num) (->> % ::st/input ::st/line-number)) g))))}))
 
+    (complete/add-completions! ed completions)
+
     (ln/assign-ix! ed)
 
     (set! (.-hooks ed) {:on-hover (atom []) :on-leave (atom [])})
     (set! (.-onmouseover (.getWrapperElement ed)) #(run-hooks! ed :on-hover %))
     (set! (.-onmouseout (.getWrapperElement ed)) #(run-hooks! ed :on-leave %))
+
+    (.on ed "change" complete/autocomplete)
 
     (on-hover!
      ed (fn [token]
@@ -99,10 +112,13 @@
 
 (defn fromSelector
   [editor-selector options]
-  (let [opts (merge {:mode "sparql" :theme "default"
-                     :on-hover (.-onHover options)
-                     :focus? (not (not (.-focus options)))}
-                    (dissoc (js->clj options :keywordize-keys true) :focus))]
+  (let [opts (update
+              (merge {:mode "sparql" :theme "default"
+                      :on-hover (.-onHover options)
+                      :completions []
+                      :focus? (not (not (.-focus options)))}
+                     (dissoc (js->clj options :keywordize-keys true) :focus))
+              :completions #(js->clj %))]
     (apply editor! editor-selector (mapcat identity opts))))
 
 (defn linked
