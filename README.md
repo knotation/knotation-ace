@@ -35,8 +35,10 @@ Example:
 Example:
 
 ```html
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
+    <meta charset="utf-8">
     <script src="../../resources/knotation_editor.js" type="text/javascript"></script>
     <script type="text/javascript">
       function setUp() {
