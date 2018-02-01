@@ -62,11 +62,12 @@
    "tree" "javascript"})
 
 (defn editor!
-  [editor-selector & {:keys [mode theme focus? completions]
+  [editor-selector & {:keys [mode theme focus? completions read-only]
                       :or {mode "sparql"
                            theme "default"
                            focus? true
-                           completions []}}]
+                           completions []
+                           read-only false}}]
   (styles/apply-style!)
   (let [elem (.querySelector js/document editor-selector)
         opts (clj->js {:lineNumbers true :gutters ["CodeMirror-linenumbers" "line-errors"]
@@ -98,7 +99,9 @@
     (set! (.-onmouseover (.getWrapperElement ed)) #(run-hooks! ed :on-hover %))
     (set! (.-onmouseout (.getWrapperElement ed)) #(run-hooks! ed :on-leave %))
 
-    (.on ed "change" complete/autocomplete)
+    (if read-only
+      (.setOption ed "readOnly" true)
+      (.on ed "change" complete/autocomplete))
 
     (on-hover!
      ed (fn [token]
@@ -114,7 +117,7 @@
   [editor-selector options]
   (let [opts (update
               (merge {:mode "sparql" :theme "default"
-                      :on-hover (.-onHover options)
+                      :on-hover (.-onHover options) :read-only (.-readOnly options)
                       :completions []
                       :focus? (not (not (.-focus options)))}
                      (dissoc (js->clj options :keywordize-keys true) :focus))
