@@ -134,6 +134,5 @@
 
 (defn link!
   [env input & outputs]
-  (.log js/console "OUT MAP" (clj->js (group-by util/format-of outputs)) (clj->js (group-by util/mode-of outputs)))
   (linked :env [env] :input input :outputs outputs))
 (def link link!)
