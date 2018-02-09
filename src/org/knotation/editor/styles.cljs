@@ -385,12 +385,13 @@ li.CodeMirror-hint-active {
   color: white;
 }")
 
-(def line-styles ".line-error { background-color: red; }
-.CodeMirror .line-error-message { border: 1px solid black; border-radius: 4px; margin-left: 5px; background-color: #f77171; }
+(def line-styles ".CodeMirror .line-error-message { border: 1px solid black; border-radius: 4px; margin-left: 5px; background-color: #f77171; }
 
 .current-subject { background-color: #f8f8f8; }
 .highlight { background-color: #f0f0f0; }
-.line-errors { width: .8em; }")
+.line-errors { width: .8em; }
+
+.line-error { background-color: red; }")
 
 (def applied? (atom false))
 (def cm-styles (atom [cm-default cm-hint-styles line-styles]))
