@@ -70,7 +70,7 @@
         out! (fn []
                (let [intermediate
                      (conj
-                      (vec (map #(api/env :kn (.getValue %)) (concat env prefix)))
+                      (vec (map #(api/env :kn (string/trim (.getValue %))) (concat env prefix)))
                       (api/input :kn (.getValue input)))]
                  (clear-line-errors! inputs)
                  (doseq [out outputs]
