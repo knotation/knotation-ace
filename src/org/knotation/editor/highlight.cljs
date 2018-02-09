@@ -8,8 +8,9 @@
   ([eds] (clear-line-highlights! eds ["highlight" "current-subject"]))
   ([eds classes]
    (doseq [e eds
-           i (util/line-range e)]
-     (.removeLineClass e i "background"))))
+           i (util/line-range e)
+           c classes]
+     (.removeLineClass e i "background" c))))
 (def clearLineHighlights clear-line-highlights!)
 
 (defn highlight-line!
@@ -34,7 +35,7 @@
 
 (defn cross->highlight!
   [line-map ed-from editors]
-  (clear-line-highlights! editors)
+  (clear-line-highlights! editors ["current-subject" "highlight"])
   (let [ln-from (util/current-line ed-from)]
     (doseq [entry (ln/lookup line-map ed-from ln-from)]
       (let [ed-to (first entry)
