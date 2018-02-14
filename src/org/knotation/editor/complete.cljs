@@ -1,7 +1,8 @@
 (ns org.knotation.editor.complete
   (:require [clojure.string :as string]
 
-            [org.knotation.editor.util :as util]))
+            [org.knotation.editor.util :as util]
+            [org.knotation.environment :as en]))
 
 (defn -merge-completions [original new]
   (distinct (concat original new)))
@@ -16,11 +17,11 @@
       (let [line (util/current-line ed)
             prev-token (.getTokenAt ed (clj->js {:line line :ch (dec (get token "start"))}))]
         (let [completions (if (= "predicate" (.-type prev-token))
-                            (let [env (:env @(get token "state"))]
+                            (let [env (.-env (.-knotation ed))]
                               (clj->js
                                (concat
-                                (keys (:label env))
-                                (map #(str % ":") (keys (:prefix env))))))
+                                (::en/label-seq env)
+                                (map #(str % ":") (::en/prefix-seq env)))))
                             (.-completions (.-knotation ed)))]
           (when (not (empty? completions))
             (clj->js {:list (filter #(string/starts-with? % (get token "string")) completions)
