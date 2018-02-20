@@ -4,6 +4,7 @@
 
             [org.knotation.api :as api]
             [org.knotation.state :as st]
+            [org.knotation.environment :as en]
 
             [org.knotation.editor.util :as util]
             [org.knotation.editor.line-map :as ln]
@@ -51,7 +52,8 @@
 (defn compile-content-to!
   [line-map-atom intermediate inputs output format]
   (let [processed (api/run-operations (conj intermediate (api/output format)))
-        result (compiled->content processed)]
+        result (compiled->content processed)
+        env (::en/env (last processed))]
     (ln/update-line-map! line-map-atom processed inputs output)
     (mark-line-errors! processed inputs)
     (.setValue output result)
@@ -60,7 +62,8 @@
     ;;         until the last one is finally left for consumption). We should figure out a principled
     ;;         way of deciding which (if any) graph to expose.
     (doseq [[ed graph] (util/zip inputs (ln/partition-graphs processed))]
-      (set! (.-graph (.-knotation ed)) graph))
+      (set! (.-graph (.-knotation ed)) graph)
+      (set! (.-env (.-knotation ed)) env))
     (.signal js/CodeMirror output "compiled-to" output result)
     processed))
 
@@ -70,7 +73,7 @@
         out! (fn []
                (let [intermediate
                      (conj
-                      (vec (map #(api/env :kn (.getValue %)) (concat env prefix)))
+                      (vec (map #(api/env :kn (string/trim (.getValue %))) (concat env prefix)))
                       (api/input :kn (.getValue input)))]
                  (clear-line-errors! inputs)
                  (doseq [out outputs]
