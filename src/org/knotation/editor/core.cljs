@@ -17,7 +17,6 @@
             [org.knotation.editor.update :as update]
             [org.knotation.editor.complete :as complete]
 
-            [org.knotation.api :as api]
             [org.knotation.rdf :as rdf]
             [org.knotation.state :as st]
 

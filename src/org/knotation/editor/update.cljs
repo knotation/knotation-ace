@@ -50,34 +50,34 @@
         nil))))
 
 (defn compile-content-to!
-  [line-map-atom intermediate inputs output format]
-  (let [processed (api/run-operations (conj intermediate (api/output format)))
-        result (compiled->content processed)
-        env (::en/env (last processed))]
-    (ln/update-line-map! line-map-atom processed inputs output)
-    (mark-line-errors! processed inputs)
+  [line-map-atom hub inputs output format]
+  (let [result (api/render-to format hub)
+        env (api/env-of hub)]
+    (ln/update-line-map! line-map-atom hub inputs output)
+    (mark-line-errors! hub inputs)
     (.setValue output result)
     ;; FIXME - this kind of works right now, but it does a lot more work than it needs to
     ;;         for multiple output editors (assigns each output graph, clobbering them successively
     ;;         until the last one is finally left for consumption). We should figure out a principled
     ;;         way of deciding which (if any) graph to expose.
-    (doseq [[ed graph] (util/zip inputs (ln/partition-graphs processed))]
+    (doseq [[ed graph] (util/zip inputs (ln/partition-graphs hub))]
       (set! (.-graph (.-knotation ed)) graph)
       (set! (.-env (.-knotation ed)) env))
     (.signal js/CodeMirror output "compiled-to" output result)
-    processed))
+    hub))
 
 (defn cross->>update!
   [line-map-atom & {:keys [env prefix input outputs]}]
   (let [inputs (conj env input)
         out! (fn []
-               (let [intermediate
-                     (conj
-                      (vec (map #(api/env :kn (string/trim (.getValue %))) (concat env prefix)))
-                      (api/input :kn (.getValue input)))]
+               (let [hub
+                     (api/read-strings
+                      :kn
+                      (map #(string/trim (.getValue %))
+                           (conj (concat env prefix) input)))]
                  (clear-line-errors! inputs)
                  (doseq [out outputs]
-                   (compile-content-to! line-map-atom intermediate inputs out (keyword (util/format-of out))))
+                   (compile-content-to! line-map-atom hub inputs out (keyword (util/format-of out))))
                  (doseq [ed inputs] (.signal js/CodeMirror ed "compiled-from"))))]
     (out!)
     (doseq [in inputs]

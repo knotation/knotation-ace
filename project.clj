@@ -13,7 +13,7 @@
                  [crate "0.2.4"]
 
                  [instaparse "1.4.8"]
-                 [org.knotation/knotation-cljc "0.1.1-SNAPSHOT"]]
+                 [org.knotation/knotation-cljc "0.2.0-SNAPSHOT"]]
 
   :cljsbuild {:builds [{:source-paths ["src/org/knotation/editor/modes" "src/org/knotation/editor"]
                         :compiler {:output-to "resources/knotation_editor.js"
