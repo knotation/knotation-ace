@@ -1,6 +1,7 @@
 (ns org.knotation.editor.line-map
   (:require [clojure.set :as set]
 
+            [org.knotation.api :as api]
             [org.knotation.state :as st]
 
             [org.knotation.editor.util :as util]))
@@ -25,8 +26,7 @@
     (partition-by
      (fn [elem]
        (let [res @a]
-         (when (= ::st/graph-end (::st/event elem))
-           (vswap! a inc))
+         (when (api/graph-end? elem) (vswap! a inc))
          res))
      processed)))
 
@@ -48,11 +48,10 @@
     (fn [memo [ed blocks]]
       (reduce
        (fn [m elem]
-         (let [i (::st/input elem) o (::st/output elem)
-               in (::st/line-number i)
-               out (::st/line-number o)]
+         (let [in (api/line-num-in elem)
+               out (api/line-num-out elem)]
            (if (and (or in (zero? in)) (or out (zero? out)))
-             (-update-map m ed out-key in out (count (::st/lines i)) (count (::st/lines o)))
+             (-update-map m ed out-key in out (count (api/lines-in elem)) (count (api/lines-out elem)))
              m)))
        memo blocks))
     line-map (util/zip input-editors (partition-graphs compiled)))))

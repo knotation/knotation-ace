@@ -10,13 +10,6 @@
             [org.knotation.editor.line-map :as ln]
             [org.knotation.editor.highlight :as high]))
 
-(defn compiled->content
-  [compiled]
-  (->> compiled
-       (mapcat #(->> % ::st/output ::st/lines))
-       (filter identity)
-       (string/join "\n")))
-
 (defn clear-line-errors!
   [eds]
   (high/clear-line-highlights! eds ["line-error"])
@@ -31,23 +24,20 @@
   [compiled editors]
   (let [cur-ed (atom 0)]
     (doseq [elem compiled]
-      (case (::st/event elem)
-        ::st/graph-end
+      (cond
+        (api/graph-end? elem)
         (swap! cur-ed inc)
 
-        ::st/error
+        (api/error? elem)
         (let [ed (get editors @cur-ed)
-              in (::st/input elem)
-              ln-num (dec (::st/line-number in))]
+              ln-num (dec (api/line-num-in elem))]
           (high/highlight-line! ed ln-num "line-error")
           (.addWidget
            ed (clj->js {:line ln-num :ch 0})
            (crate/html
             [:pre {:class (str "line-error-message hidden line-" ln-num)}
-             (->> elem ::st/error ::st/error-message)]))
-          (.setGutterMarker ed ln-num "line-errors" (crate/html [:div {:style "color: #822"} "▶"])))
-
-        nil))))
+             (api/error-message elem)]))
+          (.setGutterMarker ed ln-num "line-errors" (crate/html [:div {:style "color: #822"} "▶"])))))))
 
 (defn compile-content-to!
   [line-map-atom hub inputs output format]

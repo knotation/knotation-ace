@@ -1,6 +1,7 @@
 (ns org.knotation.editor.complete
   (:require [clojure.string :as string]
 
+            [org.knotation.api :as api]
             [org.knotation.editor.util :as util]
             [org.knotation.environment :as en]))
 
@@ -20,8 +21,8 @@
                             (let [env (.-env (.-knotation ed))]
                               (clj->js
                                (concat
-                                (::en/label-seq env)
-                                (map #(str % ":") (::en/prefix-seq env)))))
+                                (api/labels env)
+                                (map #(str % ":") (api/prefixes env)))))
                             (.-completions (.-knotation ed)))]
           (when (not (empty? completions))
             (clj->js {:list (filter #(string/starts-with? % (get token "string")) completions)

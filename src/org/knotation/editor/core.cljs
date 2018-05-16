@@ -17,6 +17,7 @@
             [org.knotation.editor.update :as update]
             [org.knotation.editor.complete :as complete]
 
+            [org.knotation.api :as api]
             [org.knotation.rdf :as rdf]
             [org.knotation.state :as st]
 
@@ -88,7 +89,7 @@
                     :getCompiledLine
                     (fn [ln-num]
                       (when-let [g (.-graph (.-knotation ed))]
-                        (first (filter #(= (inc ln-num) (->> % ::st/input ::st/line-number)) g))))}))
+                        (first (filter #(= (inc ln-num) (api/line-num-in %)) g))))}))
 
     (complete/add-completions! ed completions)
 
