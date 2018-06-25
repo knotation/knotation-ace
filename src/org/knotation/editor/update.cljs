@@ -61,7 +61,7 @@
   (let [inputs (conj env input)
         out! (fn []
                (let [hub
-                     (api/read-strings
+                     (api/read-from
                       :kn
                       (map #(string/trim (.getValue %))
                            (conj (concat env prefix) input)))]
