@@ -31,16 +31,10 @@
      processed)))
 
 (defn -update-map
-  [line-map in-k out-k in out in-ct out-ct]
-  (reduce
-   (fn [m in]
-     (reduce
-      (fn [m out]
-        (update-in
-         (update-in m [in-k in] #(conj (or % #{}) [out-k out]))
-         [out-k out] #(conj (or % #{}) [in-k in])))
-      m (map dec (range out (+ out out-ct)))))
-   line-map (map dec (range in (+ in in-ct)))))
+  [line-map in-k out-k in out]
+  (update-in
+   (update-in line-map [in-k in] #(conj (or % #{}) [out-k out]))
+   [out-k out] #(conj (or % #{}) [in-k in])))
 
 (defn compiled->line-map
   ([line-map compiled input-editors out-key]
@@ -51,7 +45,7 @@
          (let [in (api/line-num-in elem)
                out (api/line-num-out elem)]
            (if (and (or in (zero? in)) (or out (zero? out)))
-             (-update-map m ed out-key in out (count (api/lines-in elem)) (count (api/lines-out elem)))
+             (-update-map m ed out-key in out)
              m)))
        memo blocks))
     line-map (util/zip input-editors (partition-graphs compiled)))))

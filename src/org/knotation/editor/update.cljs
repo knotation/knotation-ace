@@ -41,8 +41,9 @@
 
 (defn compile-content-to!
   [line-map-atom hub inputs output format]
-  (let [result (api/render-to format hub)
-        env (api/env-of hub)]
+  (let [env (api/env-of hub)
+        hub (org.knotation.format/render-states format env hub)
+        result (api/render-to format hub)]
     (ln/update-line-map! line-map-atom hub inputs output)
     (mark-line-errors! hub inputs)
     (.setValue output result)
@@ -63,8 +64,8 @@
                (let [hub
                      (api/read-from
                       :kn
-                      (map #(string/trim (.getValue %))
-                           (conj (concat env prefix) input)))]
+                      (map #(str (string/trim (.getValue %)) "\n")
+                           (conj (vec (concat env prefix)) input)))]
                  (clear-line-errors! inputs)
                  (doseq [out outputs]
                    (compile-content-to! line-map-atom hub inputs out (keyword (util/format-of out))))
