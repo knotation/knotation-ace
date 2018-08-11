@@ -24,7 +24,7 @@
 
 (defn format-of
   [ed]
-  (.-format (.-knotation ed)))
+  (->> ed .-knotation .-format))
 (def formatOf format-of)
 
 (defn knotation-mode?

@@ -1,4 +1,4 @@
-(defproject org.knotation/knotation-editor "1.1.0-SNAPSHOT"
+(defproject org.knotation/knotation-editor "1.2.0-SNAPSHOT"
   :description "A front-end library implementing a Knotation editor"
   :url "http://github.com/knotation/knotation-editor"
   :license {:name "BSD 3-Clause License"
