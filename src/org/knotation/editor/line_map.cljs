@@ -20,47 +20,21 @@
 (defn line-map! [] (atom {}))
 (defn clear! [atm] (reset! atm {}))
 
-(defn partition-graphs
-  [processed]
-  (let [a (volatile! 0)]
-    (partition-by
-     (fn [elem]
-       (let [res @a]
-         (when (api/graph-end? elem) (vswap! a inc))
-         res))
-     processed)))
-
-(defn -update-map
-  [line-map in-k out-k in out in-ct out-ct]
-  (reduce
-   (fn [m in]
-     (reduce
-      (fn [m out]
-        (update-in
-         (update-in m [in-k in] #(conj (or % #{}) [out-k out]))
-         [out-k out] #(conj (or % #{}) [in-k in])))
-      m (range out (+ out out-ct))))
-   line-map (range in (+ in in-ct))))
-
-(defn compiled->line-map
-  ([line-map compiled input-editors out-key]
-   (reduce
-    (fn [memo [ed blocks]]
-      (reduce
-       (fn [m elem]
-         (let [in (api/line-num-in elem)
-               out (api/line-num-out elem)]
-           (if (and (or in (zero? in)) (or out (zero? out)))
-             (-update-map
-              m ed out-key in out
-              (api/line-ct-in elem) (api/line-ct-out elem))
-             m)))
-       memo blocks))
-    line-map (util/zip input-editors (partition-graphs compiled)))))
-
 (defn update-line-map!
-  [atm compiled input-editors output-editor]
-  (reset! atm (compiled->line-map @atm compiled (map ed->ix input-editors) (ed->ix output-editor))))
+  [atm hub format input-editors output-editor]
+  (let [out-ix (ed->ix output-editor)
+        raw-maps (api/line-maps-of format hub)
+        inverse-map (->> raw-maps
+                         (map clojure.set/map-invert))
+        line-maps raw-maps]
+    (.log js/console "RAW " (clj->js raw-maps))
+    (.log js/console "  --" (clj->js inverse-map))
+    (reset!
+     atm
+     line-maps
+     (->> line-maps
+          (map (fn [a b] [a b]) (range))
+          (into {})))))
 
 (defn lookup
   [line-map editor line-ix]

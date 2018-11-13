@@ -42,9 +42,12 @@
 (defn compile-content-to!
   [line-map-atom hub inputs output format]
   (let [env (api/env-of hub)
-        hub (org.knotation.format/render-states format env hub)
+        hub (api/render-states format env hub)
         result (api/render-to format hub)]
-    (ln/update-line-map! line-map-atom hub inputs output)
+    (.log js/console "BLAH BLAH")
+    (ln/update-line-map! line-map-atom hub format inputs output)
+    (.log js/console "API LINE-MAP" (clj->js (api/line-maps-of format hub)))
+    ;; (.log js/console "LNM LINE-MAP" (clj->js @line-map-atom))
     (mark-line-errors! hub inputs)
     (.setValue output result)
     ;; FIXME - this kind of works right now, but it does a lot more work than it needs to
