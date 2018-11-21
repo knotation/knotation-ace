@@ -13,7 +13,6 @@
             [org.knotation.editor.styles :as styles]
             [org.knotation.editor.util :as util]
             [org.knotation.editor.line-map :as ln]
-            [org.knotation.editor.highlight :as high]
             [org.knotation.editor.update :as update]
             [org.knotation.editor.complete :as complete]
 
@@ -128,9 +127,9 @@
   [& {:keys [env prefix input outputs]
       :or {env [] prefix []}}]
   (let [line-map (ln/line-map!)]
-    (update/cross->>update! line-map :env env :prefix prefix :input input :outputs outputs)
-    (doseq [out outputs] (high/cross<->highlight! line-map (conj env input out)))
-    (doseq [e (conj env input)] (high/subject-highlight-on-move! e))))
+    (update/cross->>update! line-map :env env :prefix prefix :input input :outputs outputs)))
+    ;; (doseq [out outputs] (high/cross<->highlight! line-map (conj env input out)))
+    ;; (doseq [e (conj env input)] (high/subject-highlight-on-move! e))))
 
 (defn link!
   [env input & outputs]
