@@ -113,15 +113,17 @@
     ed))
 
 (defn fromSelector
-  [editor-selector options]
-  (let [opts (update
+  ([editor-selector]
+    (fromSelector editor-selector {}))
+  ([editor-selector options]
+    (let [opts (update
               (merge {:mode "sparql" :theme "default"
                       :on-hover (.-onHover options) :read-only (.-readOnly options)
                       :completions []
                       :focus? (not (not (.-focus options)))}
                      (dissoc (js->clj options :keywordize-keys true) :focus))
               :completions #(js->clj %))]
-    (apply editor! editor-selector (mapcat identity opts))))
+    (apply editor! editor-selector (mapcat identity opts)))))
 
 (defn linked
   [& {:keys [env prefix input outputs]
