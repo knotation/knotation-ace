@@ -6,10 +6,10 @@
             [org.knotation.api :as knot]))
 
 (style/add-style!
- ".cm-s-knotation .cm-keyword {color: #708;}
-.cm-s-knotation .cm-iri {color: #00c; text-decoration: underline;}
-.cm-s-knotation .cm-subject {font-weight: bolder;}
-.cm-s-knotation .cm-predicate {color: #085;}
+ ".cm-s-kn .cm-keyword {color: #708;}
+.cm-s-kn .cm-iri {color: #00c; text-decoration: underline;}
+.cm-s-kn .cm-subject {font-weight: bolder;}
+.cm-s-kn .cm-predicate {color: #085;}
 ")
 
 (defn intern! [state ks val]
