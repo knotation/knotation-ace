@@ -1,12 +1,34 @@
 (ns org.knotation.editor.util
   (:import [goog.async Debouncer])
-  (:require [cljsjs.codemirror]))
+  (:require [clojure.string :as string]
+  	        [cljsjs.codemirror]
 
-(defn dom-loaded [f] (.addEventListener js/document "DOMContentLoaded" f))
+            [org.knotation.util :as util]
+            [org.knotation.environment :as en]
+            [org.knotation.state :as st]
 
-(defn tap!
-  ([value] (.log js/console (clj->js value)) value)
-  ([prefix value] (.log js/console prefix " -- " (clj->js value)) value))
+            [org.knotation.kn :as kn]
+            [org.knotation.ttl :as ttl]
+            [org.knotation.nq :as nq]
+            [org.knotation.tsv :as tsv]))
+
+(defn graph-end? [s] (= ::st/graph-end (::st/event s)))
+(defn error? [s] (= ::st/error (::st/event s)))
+
+(defn error-message [s] (->> s ::st/error ::st/error-message))
+(defn error-type [s] (->> s ::st/error ::st/error-type))
+
+(defn line-num-in [s] (->> s ::st/input ::st/start ::st/line-number))
+(defn line-ct-in [s]
+  (inc
+   (- (->> s ::st/input ::st/end ::st/line-number)
+      (line-num-in s))))
+
+(defn line-num-out [s] (->> s ::st/output ::st/start ::st/line-number))
+(defn line-ct-out [s]
+  (inc
+   (- (->> s ::st/output ::st/end ::st/line-number)
+      (line-num-in s))))
 
 (defn debounce [f interval]
   (let [dbnc (Debouncer. f interval)]
@@ -16,6 +38,10 @@
 (defn current-line
   [ed]
   (.-line (.getCursor ed)))
+
+(defn env-of
+  [all]
+  (::en/env (last all)))
 
 (defn mode-of
   [ed]
@@ -36,9 +62,6 @@
   [ed]
   (range 0 (.lineCount ed)))
 
-(defn scroll-into-view!
-  [ed & {:keys [line ch margin] :or {ch 0 margin 0}}]
-  (.scrollIntoView ed (clj->js {:line line :ch ch}) margin))
-
-(defn zip [& lists]
-  (apply map (fn [& args] (vec args)) lists))
+(defn reset-line-count
+  [state]
+  (assoc-in state [::st/location ::st/line-number] 0))

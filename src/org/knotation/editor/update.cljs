@@ -1,80 +1,170 @@
 (ns org.knotation.editor.update
   (:require [clojure.string :as string]
-            [crate.core :as crate]
+            [clojure.tools.reader :as r]
 
-            [org.knotation.api :as api]
-            [org.knotation.state :as st]
+            [org.knotation.cljs-api :as api]
+            [org.knotation.info :as info]
             [org.knotation.environment :as en]
+            [org.knotation.state :as st]
+            [org.knotation.kn :as kn]
+            [org.knotation.ttl :as ttl]
 
-            [org.knotation.editor.util :as util]
-            [org.knotation.editor.line-map :as ln]
-            [org.knotation.editor.highlight :as high]))
+            [org.knotation.editor.line-styles :as ls]
+            [org.knotation.editor.styles :as s]
+            [org.knotation.editor.util :as util]))
 
-(defn clear-line-errors!
-  [eds]
-  (high/clear-line-highlights! eds ["line-error"])
-  (doseq [ed eds]
-    (.forEach (.querySelectorAll (.getWrapperElement ed) ".line-error-message")
-              #(.remove %))
-    (doseq [i (util/line-range ed)]
-      (.setGutterMarker ed i "line-errors" nil)))
-  nil)
+;; Error handling
 
-(defn mark-line-errors!
-  [compiled editors]
-  (let [cur-ed (atom 0)]
-    (doseq [elem compiled]
-      (cond
-        (api/graph-end? elem)
-        (swap! cur-ed inc)
+(defn mark-errors!
+  "Given a sequence of states, an input editor, and an offset number, mark the 
+   gutters of any lines (minus the offset) associated with a state that has the 
+   event st/error."
+  [states input offset]
+  (doall 
+    (map
+      (fn [s]
+        (let [event (get s ::st/event)
+              ln (get-in s [::st/input ::st/start ::st/line-number])]
+          (if (= event ::st/error)
+            (ls/set-line-error! 
+              input 
+              (- ln offset)
+              (->> s ::st/error ::st/error-message)))))
+      states)))
 
-        (api/error? elem)
-        (let [ed (get editors @cur-ed)
-              ln-num (dec (api/line-num-in elem))]
-          (high/highlight-line! ed ln-num "line-error")
-          (.addWidget
-           ed (clj->js {:line ln-num :ch 0})
-           (crate/html
-            [:pre {:class (str "line-error-message hidden line-" ln-num)}
-             (api/error-message elem)]))
-          (.setGutterMarker ed ln-num "line-errors" (crate/html [:div {:style "color: #822"} "▶"])))))))
+(defn set-bad-parse!
+  "Given an input editor, an output editor, and a series of keys (content, 
+   start-ln, and end-ln), set the output editor to the error message and 
+   highlight the offending lines."
+  [input output & {:keys [content start-ln end-ln]}]
+  (.setValue output (str "Bad parse: \"" content "\" at line " start-ln))
+  (doseq [ln (range (- start-ln 1) end-ln)]
+    (ls/highlight-line! input ln "line-error")))
+
+(defn set-error!
+  "Given an error message, an input editor, and an output editor, read the error
+   message in one of two ways: (1) a bad parse which will be read into a map and
+   used to highlight the bad lines, (2) any other error message which will only
+   be written to the output editor."
+  [e input output]
+  (cond
+    (re-find #"bad-parse" e)
+    (let [m (r/read-string (string/replace e "Error: :bad-parse " ""))
+          start-ln (get-in m [::st/input ::st/start ::st/line-number])
+          end-ln (get-in m [::st/input ::st/end ::st/line-number])
+          content (string/trim-newline (get-in m [::st/input ::st/content]))]
+      (set-bad-parse! 
+        input
+        output 
+        :content content 
+        :start-ln start-ln 
+        :end-ln end-ln))
+    ;; Other error message (no line info)
+    :else
+    (let [msg (string/replace e "Error: " "")]
+      (.setValue output msg))))
+
+;; Info display
+;; WARNING - this is *initial* functionality and does not yet fully work
+
+(defn get-info
+  "Given a state with a line number, get the info HTML for that line."
+  [ed state]
+  (let [source (.-id (.getWrapperElement ed))
+        ln (->> state ::st/location ::st/line-number)]
+    (str
+      (->> state 
+           info/help 
+           info/html
+           (str "<div class='info source-" source " line-" ln " hidden''>"))
+      "</div>")))
+
+(defn get-all-info
+  "Given a sequence of states, get the HTML info for each state in a separate 
+   div element."
+  [ed states]
+  (reduce
+    (fn [v s]
+      (str v (get-info ed s)))
+    ""
+    states))
+
+;; Input and Output
+
+(defn try-read-input!
+  "Given an input editor, a previous state, and an output editor, try to read 
+   the input. On error, set a message to the output editor."
+  [input prev-state output]
+  (try
+    (api/read-string :kn prev-state (.getValue input))
+    (catch js/Error e
+      (do
+        (set-error! (str e) input output)
+        nil))))
+
+(defn compile-info!
+  "Given an output editor and a string result, reset the styles of the editor 
+   and add the result as HTML."
+  [output results]
+  (let [elem (.getWrapperElement output)]
+    (set! (.-innerHTML elem) (string/trim (string/join "\n" results)))
+    (set! (.-overflow (.-style elem)) nil)
+    (set! (.-height (.-style elem)) nil)
+    (set! (.-font (.-style elem)) nil)
+    (s/remove-class! elem ".CodeMirror")))
 
 (defn compile-content-to!
-  [line-map-atom hub inputs output format]
-  (let [env (api/env-of hub)
-        hub (org.knotation.format/render-states format env hub)
-        result (api/render-to format hub)]
-    (ln/update-line-map! line-map-atom hub inputs output)
-    (mark-line-errors! hub inputs)
+  "Given a sequence of input editors, a result string, and an output editor, 
+   compile the result string to the output editor."
+  [inputs result output]
+  (let [fmt (keyword (util/format-of output))]
     (.setValue output result)
-    ;; FIXME - this kind of works right now, but it does a lot more work than it needs to
-    ;;         for multiple output editors (assigns each output graph, clobbering them successively
-    ;;         until the last one is finally left for consumption). We should figure out a principled
-    ;;         way of deciding which (if any) graph to expose.
-    (doseq [[ed graph] (util/zip inputs (ln/partition-graphs hub))]
-      (set! (.-graph (.-knotation ed)) graph)
-      (set! (.-env (.-knotation ed)) env))
     (.signal js/CodeMirror output "compiled-to" output result)
-    hub))
+    (doseq [i inputs]
+      (.signal js/CodeMirror i "compiled-from"))))
 
-(defn cross->>update!
-  [line-map-atom & {:keys [env prefix input outputs]}]
-  (let [inputs (conj env input)
-        out! (fn []
-               (let [hub
-                     (api/read-from
-                      :kn
-                      (map #(str (string/trim (.getValue %)) "\n")
-                           (conj (vec (concat env prefix)) input)))]
-                 (clear-line-errors! inputs)
-                 (doseq [out outputs]
-                   (compile-content-to! line-map-atom hub inputs out (keyword (util/format-of out))))
-                 (doseq [ed inputs] (.signal js/CodeMirror ed "compiled-from"))))]
-    (out!)
-    (doseq [in inputs]
-      (.on in "changes"
+;; Main update methods
+
+(defn run-update!
+  "Given a sequence of input editors (usually a context and an input), convert 
+   the contents of the input to the output format and set the value of the 
+   output editor as the new content."
+  [context input output]
+  (let [fmt (keyword (util/format-of output))
+        context-states (try-read-input! context nil output)
+        initial-state (util/reset-line-count (last context-states))
+        states (try-read-input! input initial-state output)]
+    ;; Clear line styles and set errors, if any
+    (ls/clear-line-styles! [context input])
+    (mark-errors! context-states context 1)
+    (mark-errors! states input 0)
+    ;; If there is a result, set the output
+    (if (some? states)
+      (case fmt
+        ;; HTML for info messages
+        :html
+        (let [context-res 
+              (if (some? context-states)
+                (get-all-info context context-states)
+                nil)
+              input-res (get-all-info input states)]
+          (compile-info! output [context-res input-res]))
+        ;; Any other format
+        (let [result (api/render-output fmt initial-state states)]
+          (if (some? result)
+            (compile-content-to! [context input] result output)))))))
+
+(defn update!
+  "Given :context (optional), :input, and :output keys, any time an input 
+   changes, convert it to the output format and set the value of the output 
+   editor as the new content."
+  [& {:keys [context input output]}]
+  (let [c (if (some? context) (vector context) (vector))
+        inputs (conj c input)]
+    (run-update! context input output)
+    (doseq [i inputs]
+      (.on i "changes"
            (util/debounce
             (fn [cs]
-              (ln/clear! line-map-atom)
-              (out!))
+              (run-update! context input output))
             500)))))

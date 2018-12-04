@@ -6,6 +6,8 @@
 
             [org.knotation.editor.util :as util]))
 
+;; Currently unused
+
 (def editors (atom []))
 
 (defn assign-ix! [ed]
