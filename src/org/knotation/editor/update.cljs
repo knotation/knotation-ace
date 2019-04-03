@@ -129,15 +129,25 @@
   "Given a sequence of input editors (usually a context and an input), convert 
    the contents of the input to the output format and set the value of the 
    output editor as the new content."
-  [context input output]
+  [line-map context input output]
   (let [fmt (keyword (util/format-of output))
-        context-states (try-read-input! context nil output)
+        ;; context has no previous state, but we want to make sure the first
+        ;; line is numbered as 1, so provide a default state with line num 0
+        context-states 
+        (try-read-input! 
+          context 
+          (assoc st/default-state ::st/location {::st/line-number 0}) 
+          output)
         initial-state (util/reset-line-count (last context-states))
-        states (try-read-input! input initial-state output)]
+        states (try-read-input! input initial-state output)] 
     ;; Clear line styles and set errors, if any
     (ls/clear-line-styles! [context input])
     (mark-errors! context-states context 1)
     (mark-errors! states input 0)
+    ;; Update the states for syntax highlighting
+    (if (some? context)
+      (.setOption context "states" context-states))
+    (.setOption input "states" states)
     ;; If there is a result, set the output
     (if (some? states)
       (case fmt
@@ -158,13 +168,13 @@
   "Given :context (optional), :input, and :output keys, any time an input 
    changes, convert it to the output format and set the value of the output 
    editor as the new content."
-  [& {:keys [context input output]}]
+  [line-map & {:keys [context input output]}]
   (let [c (if (some? context) (vector context) (vector))
         inputs (conj c input)]
-    (run-update! context input output)
+    (run-update! line-map context input output)
     (doseq [i inputs]
       (.on i "changes"
            (util/debounce
             (fn [cs]
-              (run-update! context input output))
+              (run-update! line-map context input output))
             500)))))

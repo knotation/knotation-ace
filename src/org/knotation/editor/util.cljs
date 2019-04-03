@@ -65,3 +65,19 @@
 (defn reset-line-count
   [state]
   (assoc-in state [::st/location ::st/line-number] 0))
+
+(defn zip [& lists]
+  (apply map (fn [& args] (vec args)) lists))
+
+(defn get-state-at
+  ([states line]
+   (->> states
+       (filter #(contains? % ::st/input))
+       (filter #(< (->> % ::st/input ::st/start ::st/line-number) line))
+       first))
+  ([states line col]
+   (->> states
+       (filter #(contains? % ::st/input))
+       (filter #(< (->> % ::st/input ::st/start ::st/line-number) line))
+       (filter #(< (->> % ::st/input ::st/start ::st/column-number) col))
+       first)))

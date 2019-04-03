@@ -1,66 +1,64 @@
 (ns org.knotation.editor.modes.knotation
   (:require [clojure.string :as string]
             [cljsjs.codemirror]
+            [clojure.walk :as walk]
 
+            [org.knotation.editor.util :as util]
             [org.knotation.editor.styles :as style]
-            [org.knotation.api :as knot]))
+            [org.knotation.state :as st]))
 
 (style/add-style!
  ".cm-s-kn .cm-keyword {color: #708;}
 .cm-s-kn .cm-iri {color: #00c; text-decoration: underline;}
 .cm-s-kn .cm-subject {font-weight: bolder;}
 .cm-s-kn .cm-predicate {color: #085;}
+.cm-s-kn .cm-symbol {color: #000;}
+.cm-s-kn .cm-prefix {color: #708;}
 ")
 
-(defn intern! [state ks val]
-  (swap! state (fn [s] (assoc-in s (vec (cons :env ks)) val))))
+(defn get-token
+  "Given a stream, a state (for the mode), a parse type (keyword), and parse 
+   content, set the parse type as the previous token and apply the current 
+   token."
+  [stream state type content]
+  (if (.skipTo stream content)
+    (let [cur-token (or (:prev-token @state) "comment")]
+      (swap! state assoc :prev-token (name type))
+      cur-token)
+    (do (.skipToEnd stream) "comment")))
 
-(defn prefix? [state word]
-  (not (not (get-in @state [:env :prefix word]))))
+(defn read-parses
+  "Given a stream, a state (for the mode), and a knotation state, use the parses
+   to return highlighting tokens."
+  [stream state kn-state]
+  (let [parses 
+        (if (not (empty? (:parses @state))) 
+          (:parses @state) 
+          (rest (::st/parse kn-state)))
+        p (first parses)
+        rest-parses (rest parses)]
+    (if (not (empty? rest-parses))
+      (swap! state assoc :parses rest-parses)
+      (do
+        (swap! state assoc :parses [])
+        (swap! state update :line inc)))
+    (get-token stream state (first p) (second p))))
 
-(defn advanced! [state token-type]
-  (swap! state (fn [s] (assoc s :prev-token token-type)))
-  token-type)
+(defn parse-kn-states
+  "Given a stream, a state (for the mode), and all knotation states for the 
+   editor, use the states to return highlighting tokens."
+  [stream state all-states]
+  (let [kn-state (util/get-state-at all-states (:line @state) (:column @state))]
+    (read-parses stream state kn-state)))
 
 (.defineMode
- js/CodeMirror "knotation"
- (fn [config]
-   (letfn [(token [stream state]
-             (let [match? (fn [reg] (when (.match stream reg false) (.match stream reg) true))
-                   sol? (.sol stream)]
-               (advanced!
-                state
-                (cond (and (not sol?) (.eatSpace stream)) "whitespace"
-
-                      (match? #"@prefix")
-                      (let [[_ name val] (re-matches #"@prefix *(.*?): *(.*)" (.-string stream))]
-                        (intern! state [:prefix name] val)
-                        "keyword")
-
-                      (match? #"<.*?>") "iri"
-
-                      (and sol? (= "#" (.peek stream)))
-                      (do (.skipToEnd stream)
-                          "comment")
-
-                      (and sol? (.match stream #"\s+"))
-                      (do (.skipToEnd stream)
-                          "multiline-term")
-
-                      (and sol? (.match stream #": .*" false))
-                      (let [[_ sub] (.match stream #": (.*)")]
-                        (swap! state assoc :subject sub)
-                        "subject")
-
-                      (and sol? (.match stream #".*?: " false))
-                      (let [[_ pred] (.match stream #"(.*?): ")]
-                        (when (and (prefix? state pred) (not (.eatSpace stream)))
-                          (.match stream #".*?: "))
-                        "predicate")
-
-                      (match? #".*?:.*") "prefixed-name"
-
-                      :else (do (.skipToEnd stream) "term")))))]
-     (clj->js {:startState (fn [] (atom {:env {}})) :copyState (fn [state] (atom @state))
-               :token token
-               :closeBrackets {:pairs "()[]{}\"\""}}))))
+  js/CodeMirror "knotation"
+  (fn [config]
+    (clj->js 
+      {:startState (fn [] (atom {:line 1 :column 1:parses []}))
+       :copyState (fn [state] (atom @state))
+       :token (fn [stream state]
+                (parse-kn-states 
+                  stream 
+                  state 
+                  (get (js->clj config) "states")))})))

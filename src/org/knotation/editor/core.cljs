@@ -159,14 +159,16 @@
   "Given input and output keys, link the editors so that the content of the 
    input editor is compiled to the output editor."
   [& {:keys [context input output]}]
-  ;; Maybe add info hooks for a context editor
-  (when (some? context)
-    (set! (.-id (.getWrapperElement context)) "context")
-    (add-info-hooks! context output))
-  ;; Add info hooks for the input editor
-  (set! (.-id (.getWrapperElement input)) "input")
-  (add-info-hooks! input output)
-  (update/update! :context context :input input :output output))
+  (let [line-map {}]
+    (set! (.-id (.getWrapperElement output)) "output")
+    ;; Maybe add info hooks for a context editor
+    (when (some? context)
+      (set! (.-id (.getWrapperElement context)) "context")
+      (add-info-hooks! context output))
+    ;; Add info hooks for the input editor
+    (set! (.-id (.getWrapperElement input)) "input")
+    (add-info-hooks! input output)
+    (update/update! line-map :context context :input input :output output)))
 
 (defn link!
   "Given an input editor and an output editor, link the editors so that the 
